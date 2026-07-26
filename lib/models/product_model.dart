@@ -1,16 +1,10 @@
 class ProductModel {
   int id;
-
   String maSanPham;
-
   String tenSanPham;
-
   String donVi;
-
   int soKien;
-
   String diaChiLapRap;
-
   DateTime ngayTao;
 
   ProductModel({
@@ -22,10 +16,6 @@ class ProductModel {
     required this.diaChiLapRap,
     required this.ngayTao,
   });
-
-  //------------------------------------------------
-  // Copy
-  //------------------------------------------------
 
   ProductModel copyWith({
     int? id,
@@ -47,56 +37,52 @@ class ProductModel {
     );
   }
 
-  //------------------------------------------------
-  // From Map
-  //------------------------------------------------
-
   factory ProductModel.fromMap(Map<String, dynamic> map) {
     return ProductModel(
-      id: map["id"] ?? 0,
-      maSanPham: map["maSanPham"] ?? "",
-      tenSanPham: map["tenSanPham"] ?? "",
-      donVi: map["donVi"] ?? "",
-      soKien: map["soKien"] ?? 0,
-      diaChiLapRap: map["diaChiLapRap"] ?? "",
-      ngayTao: map["ngayTao"] == null
-          ? DateTime.now()
-          : DateTime.parse(map["ngayTao"]),
+      id: _toInt(map['id']),
+      maSanPham: _toString(map['maSanPham']),
+      tenSanPham: _toString(map['tenSanPham']),
+      donVi: _toString(map['donVi']),
+      soKien: _toInt(map['soKien']),
+      diaChiLapRap: _toString(map['diaChiLapRap']),
+      ngayTao: _toDate(map['ngayTao']) ?? DateTime.now(),
     );
   }
 
-  //------------------------------------------------
-  // To Map
-  //------------------------------------------------
-
   Map<String, dynamic> toMap() {
     return {
-      if (id != 0) "id": id,
-      "maSanPham": maSanPham,
-      "tenSanPham": tenSanPham,
-      "donVi": donVi,
-      "soKien": soKien,
-      "diaChiLapRap": diaChiLapRap,
-      "ngayTao": ngayTao.toIso8601String(),
+      if (id != 0) 'id': id,
+      'maSanPham': maSanPham,
+      'tenSanPham': tenSanPham,
+      'donVi': donVi,
+      'soKien': soKien,
+      'diaChiLapRap': diaChiLapRap,
+      'ngayTao': ngayTao.toIso8601String(),
     };
   }
 
-  //------------------------------------------------
-  // Debug
-  //------------------------------------------------
+  static int _toInt(dynamic value) {
+    if (value is int) return value;
+    if (value is double) return value.toInt();
+    if (value is String) return int.tryParse(value) ?? 0;
+    return 0;
+  }
 
-  @override
-  String toString() {
-    return '''
-ProductModel(
-id: $id,
-maSanPham: $maSanPham,
-tenSanPham: $tenSanPham,
-donVi: $donVi,
-soKien: $soKien,
-diaChiLapRap: $diaChiLapRap,
-ngayTao: $ngayTao
-)
-''';
+  static String _toString(dynamic value) {
+    if (value is String) return value;
+    if (value == null) return '';
+    return value.toString();
+  }
+
+  static DateTime? _toDate(dynamic value) {
+    if (value is DateTime) return value;
+    if (value is String) {
+      try {
+        return DateTime.parse(value);
+      } catch (_) {
+        return null;
+      }
+    }
+    return null;
   }
 }

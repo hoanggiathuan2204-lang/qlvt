@@ -47,15 +47,15 @@ class MaterialModel {
 
   factory MaterialModel.fromMap(Map<String, dynamic> map) {
     return MaterialModel(
-      id: map["id"] ?? 0,
-      maVatTu: map["maVatTu"] ?? "",
-      tenVatTu: map["tenVatTu"] ?? "",
-      nhomVatTu: map["nhomVatTu"] ?? "",
-      donViTinh: map["donViTinh"] ?? "",
-      soLuongTon: map["soLuongTon"] ?? 0,
-      mucCanhBao: map["mucCanhBao"] ?? 0,
-      giaNhap: (map["giaNhap"] ?? 0).toDouble(),
-      nhaCungCap: map["nhaCungCap"] ?? "",
+      id: _toInt(map['id']),
+      maVatTu: _toString(map['maVatTu']),
+      tenVatTu: _toString(map['tenVatTu']),
+      nhomVatTu: _toString(map['nhomVatTu']),
+      donViTinh: _toString(map['donViTinh']),
+      soLuongTon: _toInt(map['soLuongTon']),
+      mucCanhBao: _toInt(map['mucCanhBao']),
+      giaNhap: _toDouble(map['giaNhap']),
+      nhaCungCap: _toString(map['nhaCungCap']),
     );
   }
 
@@ -73,18 +73,23 @@ class MaterialModel {
     };
   }
 
-  @override
-  String toString() {
-    return 'MaterialModel('
-        'id: $id, '
-        'maVatTu: $maVatTu, '
-        'tenVatTu: $tenVatTu, '
-        'nhomVatTu: $nhomVatTu, '
-        'donViTinh: $donViTinh, '
-        'soLuongTon: $soLuongTon, '
-        'mucCanhBao: $mucCanhBao, '
-        'giaNhap: $giaNhap, '
-        'nhaCungCap: $nhaCungCap'
-        ')';
+  static int _toInt(dynamic value) {
+    if (value is int) return value;
+    if (value is double) return value.toInt();
+    if (value is String) return int.tryParse(value) ?? 0;
+    return 0;
+  }
+
+  static double _toDouble(dynamic value) {
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is String) return double.tryParse(value) ?? 0.0;
+    return 0.0;
+  }
+
+  static String _toString(dynamic value) {
+    if (value is String) return value;
+    if (value == null) return '';
+    return value.toString();
   }
 }

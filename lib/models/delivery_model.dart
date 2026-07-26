@@ -1,22 +1,13 @@
 class DeliveryModel {
   int id;
-
   String tenSanPham;
-
   int soKien;
-
   String diaChiGiao;
-
   String nguoiBocHang;
-
   String taiXe;
-
   String bienSoXe;
-
   DateTime thoiGian;
-
   String ghiChu;
-
   String? imagePath;
 
   DeliveryModel({
@@ -31,10 +22,6 @@ class DeliveryModel {
     required this.ghiChu,
     this.imagePath,
   });
-
-  //------------------------------------------------
-  // Copy
-  //------------------------------------------------
 
   DeliveryModel copyWith({
     int? id,
@@ -62,30 +49,20 @@ class DeliveryModel {
     );
   }
 
-  //------------------------------------------------
-  // From Map
-  //------------------------------------------------
-
   factory DeliveryModel.fromMap(Map<String, dynamic> map) {
     return DeliveryModel(
-      id: map["id"] ?? 0,
-      tenSanPham: map["tenSanPham"] ?? "",
-      soKien: map["soKien"] ?? 0,
-      diaChiGiao: map["diaChiGiao"] ?? "",
-      nguoiBocHang: map["nguoiBocHang"] ?? "",
-      taiXe: map["taiXe"] ?? "",
-      bienSoXe: map["bienSoXe"] ?? "",
-      thoiGian: map["thoiGian"] == null
-          ? DateTime.now()
-          : DateTime.parse(map["thoiGian"]),
-      ghiChu: map["ghiChu"] ?? "",
-      imagePath: map["imagePath"],
+      id: _toInt(map['id']),
+      tenSanPham: _toString(map['tenSanPham']),
+      soKien: _toInt(map['soKien']),
+      diaChiGiao: _toString(map['diaChiGiao']),
+      nguoiBocHang: _toString(map['nguoiBocHang']),
+      taiXe: _toString(map['taiXe']),
+      bienSoXe: _toString(map['bienSoXe']),
+      thoiGian: _toDate(map['thoiGian']) ?? DateTime.now(),
+      ghiChu: _toString(map['ghiChu']),
+      imagePath: _toStringOrNull(map['imagePath']),
     );
   }
-
-  //------------------------------------------------
-  // To Map
-  //------------------------------------------------
 
   Map<String, dynamic> toMap() {
     return {
@@ -102,25 +79,33 @@ class DeliveryModel {
     };
   }
 
-  //------------------------------------------------
-  // Debug
-  //------------------------------------------------
+  static int _toInt(dynamic value) {
+    if (value is int) return value;
+    if (value is double) return value.toInt();
+    if (value is String) return int.tryParse(value) ?? 0;
+    return 0;
+  }
 
-  @override
-  String toString() {
-    return '''
-DeliveryModel(
-id: $id,
-tenSanPham: $tenSanPham,
-soKien: $soKien,
-diaChiGiao: $diaChiGiao,
-nguoiBocHang: $nguoiBocHang,
-taiXe: $taiXe,
-bienSoXe: $bienSoXe,
-thoiGian: $thoiGian,
-ghiChu: $ghiChu,
-imagePath: $imagePath
-)
-''';
+  static String _toString(dynamic value) {
+    if (value is String) return value;
+    if (value == null) return '';
+    return value.toString();
+  }
+
+  static String? _toStringOrNull(dynamic value) {
+    if (value == null) return null;
+    return value.toString();
+  }
+
+  static DateTime? _toDate(dynamic value) {
+    if (value is DateTime) return value;
+    if (value is String) {
+      try {
+        return DateTime.parse(value);
+      } catch (_) {
+        return null;
+      }
+    }
+    return null;
   }
 }

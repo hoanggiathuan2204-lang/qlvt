@@ -51,18 +51,16 @@ class ImportModel {
 
   factory ImportModel.fromMap(Map<String, dynamic> map) {
     return ImportModel(
-      id: map['id'] ?? 0,
-      materialId: map['materialId'] ?? 0,
-      maVatTu: map['maVatTu'] ?? '',
-      tenVatTu: map['tenVatTu'] ?? '',
-      soLuong: map['soLuong'] ?? 0,
-      donGia: (map['donGia'] ?? 0).toDouble(),
-      nhaCungCap: map['nhaCungCap'] ?? '',
-      nguoiNhap: map['nguoiNhap'] ?? '',
-      ghiChu: map['ghiChu'] ?? '',
-      thoiGian: map['thoiGian'] != null
-          ? DateTime.parse(map['thoiGian'])
-          : DateTime.now(),
+      id: _toInt(map['id']),
+      materialId: _toInt(map['materialId']),
+      maVatTu: _toString(map['maVatTu']),
+      tenVatTu: _toString(map['tenVatTu']),
+      soLuong: _toInt(map['soLuong']),
+      donGia: _toDouble(map['donGia']),
+      nhaCungCap: _toString(map['nhaCungCap']),
+      nguoiNhap: _toString(map['nguoiNhap']),
+      ghiChu: _toString(map['ghiChu']),
+      thoiGian: _toDate(map['thoiGian']) ?? DateTime.now(),
     );
   }
 
@@ -79,5 +77,37 @@ class ImportModel {
       'ghiChu': ghiChu,
       'thoiGian': thoiGian.toIso8601String(),
     };
+  }
+
+  static int _toInt(dynamic value) {
+    if (value is int) return value;
+    if (value is double) return value.toInt();
+    if (value is String) return int.tryParse(value) ?? 0;
+    return 0;
+  }
+
+  static double _toDouble(dynamic value) {
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is String) return double.tryParse(value) ?? 0.0;
+    return 0.0;
+  }
+
+  static String _toString(dynamic value) {
+    if (value is String) return value;
+    if (value == null) return '';
+    return value.toString();
+  }
+
+  static DateTime? _toDate(dynamic value) {
+    if (value is DateTime) return value;
+    if (value is String) {
+      try {
+        return DateTime.parse(value);
+      } catch (_) {
+        return null;
+      }
+    }
+    return null;
   }
 }

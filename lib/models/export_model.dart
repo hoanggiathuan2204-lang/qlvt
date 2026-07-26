@@ -47,17 +47,15 @@ class ExportModel {
 
   factory ExportModel.fromMap(Map<String, dynamic> map) {
     return ExportModel(
-      id: map['id'] ?? 0,
-      materialId: map['materialId'] ?? 0,
-      maVatTu: map['maVatTu'] ?? '',
-      tenVatTu: map['tenVatTu'] ?? '',
-      soLuong: map['soLuong'] ?? 0,
-      nguoiXuat: map['nguoiXuat'] ?? '',
-      lyDo: map['lyDo'] ?? '',
-      ghiChu: map['ghiChu'] ?? '',
-      thoiGian: map['thoiGian'] != null
-          ? DateTime.parse(map['thoiGian'])
-          : DateTime.now(),
+      id: _toInt(map['id']),
+      materialId: _toInt(map['materialId']),
+      maVatTu: _toString(map['maVatTu']),
+      tenVatTu: _toString(map['tenVatTu']),
+      soLuong: _toInt(map['soLuong']),
+      nguoiXuat: _toString(map['nguoiXuat']),
+      lyDo: _toString(map['lyDo']),
+      ghiChu: _toString(map['ghiChu']),
+      thoiGian: _toDate(map['thoiGian']) ?? DateTime.now(),
     );
   }
 
@@ -66,12 +64,37 @@ class ExportModel {
       if (id != 0) 'id': id,
       'materialId': materialId,
       'maVatTu': maVatTu,
-      'tenVatTu': tenVatTu,
+      'tenSanPham': tenVatTu,
       'soLuong': soLuong,
       'nguoiXuat': nguoiXuat,
       'lyDo': lyDo,
       'ghiChu': ghiChu,
       'thoiGian': thoiGian.toIso8601String(),
     };
+  }
+
+  static int _toInt(dynamic value) {
+    if (value is int) return value;
+    if (value is double) return value.toInt();
+    if (value is String) return int.tryParse(value) ?? 0;
+    return 0;
+  }
+
+  static String _toString(dynamic value) {
+    if (value is String) return value;
+    if (value == null) return '';
+    return value.toString();
+  }
+
+  static DateTime? _toDate(dynamic value) {
+    if (value is DateTime) return value;
+    if (value is String) {
+      try {
+        return DateTime.parse(value);
+      } catch (_) {
+        return null;
+      }
+    }
+    return null;
   }
 }

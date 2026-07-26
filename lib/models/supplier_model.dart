@@ -47,17 +47,15 @@ class SupplierModel {
 
   factory SupplierModel.fromMap(Map<String, dynamic> map) {
     return SupplierModel(
-      id: map['id'] ?? 0,
-      maNCC: map['maNCC'] ?? '',
-      tenNCC: map['tenNCC'] ?? '',
-      diaChi: map['diaChi'] ?? '',
-      soDienThoai: map['soDienThoai'] ?? '',
-      email: map['email'] ?? '',
-      nguoiLienHe: map['nguoiLienHe'] ?? '',
-      ghiChu: map['ghiChu'] ?? '',
-      ngayTao: map['ngayTao'] != null
-          ? DateTime.parse(map['ngayTao'])
-          : DateTime.now(),
+      id: _toInt(map['id']),
+      maNCC: _toString(map['maNCC']),
+      tenNCC: _toString(map['tenNCC']),
+      diaChi: _toString(map['diaChi']),
+      soDienThoai: _toString(map['soDienThoai']),
+      email: _toString(map['email']),
+      nguoiLienHe: _toString(map['nguoiLienHe']),
+      ghiChu: _toString(map['ghiChu']),
+      ngayTao: _toDate(map['ngayTao']) ?? DateTime.now(),
     );
   }
 
@@ -75,6 +73,28 @@ class SupplierModel {
     };
   }
 
-  @override
-  String toString() => 'SupplierModel(id:$id, maNCC:$maNCC, tenNCC:$tenNCC)';
+  static int _toInt(dynamic value) {
+    if (value is int) return value;
+    if (value is double) return value.toInt();
+    if (value is String) return int.tryParse(value) ?? 0;
+    return 0;
+  }
+
+  static String _toString(dynamic value) {
+    if (value is String) return value;
+    if (value == null) return '';
+    return value.toString();
+  }
+
+  static DateTime? _toDate(dynamic value) {
+    if (value is DateTime) return value;
+    if (value is String) {
+      try {
+        return DateTime.parse(value);
+      } catch (_) {
+        return null;
+      }
+    }
+    return null;
+  }
 }

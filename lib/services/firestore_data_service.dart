@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/delivery_model.dart';
@@ -26,8 +28,7 @@ class FirestoreDataService {
       final list = <MaterialModel>[];
       for (final doc in snapshot.docs) {
         try {
-          final raw = doc.data();
-          final data = _sanitize(raw);
+          final data = _toPlainMap(doc.data());
           list.add(MaterialModel.fromMap({...data, 'id': _safeInt(doc.id)}));
         } catch (e) {
           continue;
@@ -59,8 +60,7 @@ class FirestoreDataService {
       final list = <ProductModel>[];
       for (final doc in snapshot.docs) {
         try {
-          final raw = doc.data();
-          final data = _sanitize(raw);
+          final data = _toPlainMap(doc.data());
           list.add(ProductModel.fromMap({...data, 'id': _safeInt(doc.id)}));
         } catch (e) {
           continue;
@@ -92,8 +92,7 @@ class FirestoreDataService {
       final list = <SupplierModel>[];
       for (final doc in snapshot.docs) {
         try {
-          final raw = doc.data();
-          final data = _sanitize(raw);
+          final data = _toPlainMap(doc.data());
           list.add(SupplierModel.fromMap({...data, 'id': _safeInt(doc.id)}));
         } catch (e) {
           continue;
@@ -128,8 +127,7 @@ class FirestoreDataService {
       final list = <DeliveryModel>[];
       for (final doc in snapshot.docs) {
         try {
-          final raw = doc.data();
-          final data = _sanitize(raw);
+          final data = _toPlainMap(doc.data());
           list.add(DeliveryModel.fromMap({...data, 'id': _safeInt(doc.id)}));
         } catch (e) {
           continue;
@@ -162,23 +160,15 @@ class FirestoreDataService {
     }
   }
 
-  static Map<String, dynamic> _sanitize(Map<String, dynamic> raw) {
-    final out = <String, dynamic>{};
-    for (final entry in raw.entries) {
-      final value = entry.value;
-      if (value is Timestamp) {
-        out[entry.key] = value.toDate().toIso8601String();
-      } else if (value is DocumentReference) {
-        out[entry.key] = value.id;
-      } else if (value is GeoPoint) {
-        out[entry.key] = '${value.latitude},${value.longitude}';
-      } else if (value is Blob) {
-        out[entry.key] = '';
-      } else {
-        out[entry.key] = value;
-      }
+  static Map<String, dynamic> _toPlainMap(Map<String, dynamic> raw) {
+    try {
+      final encoded = jsonEncode(raw);
+      final decoded = jsonDecode(encoded);
+      if (decoded is Map<String, dynamic>) return decoded;
+      return <String, dynamic>{};
+    } catch (_) {
+      return <String, dynamic>{};
     }
-    return out;
   }
 
   static int _safeInt(String value) {

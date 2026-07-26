@@ -91,7 +91,17 @@ class _LoginPageState extends State<LoginPage> {
       if (!mounted) return;
       try {
         await FirebaseService.signInAnonymously();
-      } catch (_) {}
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Lỗi đăng nhập Firebase: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
+      if (!mounted) return;
       Navigator.of(
         context,
       ).pushReplacement(MaterialPageRoute(builder: (_) => const AppShell()));

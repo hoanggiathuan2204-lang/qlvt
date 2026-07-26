@@ -65,27 +65,37 @@ class _DashboardScreenState extends State<DashboardScreen> {
     setState(() => loading = true);
 
     try {
-      final results = await Future.wait([
-        AppData.materialController.totalMaterial(),
-        AppData.productController.totalProduct(),
-        AppData.supplierController.total(),
-        AppData.deliveryController.totalDelivery(),
-        AppData.materialController.warningMaterial(),
-        AppData.materialController.totalInventory(),
-        AppData.materialController.warningList(),
-        AppData.deliveryController.newest(),
-      ]);
+      totalMaterial = await AppData.materialController.totalMaterial();
+      if (!mounted) return;
+      setState(() {});
 
+      totalProduct = await AppData.productController.totalProduct();
+      if (!mounted) return;
+      setState(() {});
+
+      totalSupplier = await AppData.supplierController.total();
+      if (!mounted) return;
+      setState(() {});
+
+      totalDelivery = await AppData.deliveryController.totalDelivery();
+      if (!mounted) return;
+      setState(() {});
+
+      warningCount = await AppData.materialController.warningMaterial();
+      if (!mounted) return;
+      setState(() {});
+
+      totalInventory = await AppData.materialController.totalInventory();
+      if (!mounted) return;
+      setState(() {});
+
+      warningList = await AppData.materialController.warningList();
+      if (!mounted) return;
+      setState(() {});
+
+      final all = await AppData.deliveryController.newest();
       if (!mounted) return;
       setState(() {
-        totalMaterial = results[0] as int;
-        totalProduct = results[1] as int;
-        totalSupplier = results[2] as int;
-        totalDelivery = results[3] as int;
-        warningCount = results[4] as int;
-        totalInventory = results[5] as int;
-        warningList = results[6] as List<MaterialModel>;
-        final all = results[7] as List<DeliveryModel>;
         recentDeliveries = all.take(5).toList();
         loading = false;
       });

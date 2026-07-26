@@ -1,0 +1,43 @@
+name: quan_ly_vat_tu
+
+description: A new Flutter project.
+
+publish_to: "none"
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.8.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+
+  # Database
+  sqflite: ^2.4.2
+  sqflite_common_ffi: ^2.3.4
+  path: ^1.9.1
+  path_provider: ^2.1.5
+
+  # Chọn ảnh
+  file_picker: ^10.3.2
+
+  # Quốc tế hóa
+  intl: ^0.19.0
+  firebase_core: ^4.12.1
+  firebase_auth: ^6.5.6
+  cloud_firestore: ^6.7.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/logo.png

@@ -27,10 +27,18 @@ class _DeliveryHistoryScreenState extends State<DeliveryHistoryScreen> {
   }
 
   Future<void> refreshList() async {
-    deliveries = await controller.search(searchController.text);
-
-    if (mounted) {
-      setState(() {});
+    try {
+      deliveries = await controller.search(searchController.text);
+      if (mounted) {
+        setState(() {});
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => deliveries = []);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi tải lịch sử giao hàng: $e'), backgroundColor: Colors.red),
+        );
+      }
     }
   }
 

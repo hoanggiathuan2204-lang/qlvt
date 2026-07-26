@@ -37,9 +37,16 @@ class _MaterialScreenState extends State<MaterialScreen> {
   }
 
   Future<void> refreshList() async {
-    final result = await controller.search(searchController.text);
-    if (!mounted) return;
-    setState(() => materials = result);
+    try {
+      final result = await controller.search(searchController.text);
+      if (!mounted) return;
+      setState(() => materials = result);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Lỗi tải vật tư: $e'), backgroundColor: Colors.red),
+      );
+    }
   }
 
   Future<void> addMaterial() async {
@@ -48,9 +55,16 @@ class _MaterialScreenState extends State<MaterialScreen> {
       builder: (_) => const MaterialDialog(),
     );
     if (result != null) {
-      await controller.addMaterial(result);
-      await refreshList();
-      _showSnack('Đã thêm vật tư thành công', Colors.green);
+      try {
+        await controller.addMaterial(result);
+        await refreshList();
+        _showSnack('Đã thêm vật tư thành công', Colors.green);
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi thêm vật tư: $e'), backgroundColor: Colors.red),
+        );
+      }
     }
   }
 

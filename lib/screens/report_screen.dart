@@ -75,31 +75,39 @@ class _ReportScreenState extends State<ReportScreen>
     if (!mounted) return;
     setState(() => loading = true);
 
-    final results = await Future.wait([
-      AppData.materialController.totalMaterial(),
-      AppData.materialController.totalInventory(),
-      AppData.materialController.warningMaterial(),
-      AppData.productController.totalProduct(),
-      AppData.deliveryController.totalDelivery(),
-      AppData.supplierController.total(),
-      AppData.materialController.getImportHistory(),
-      AppData.materialController.getExportHistory(),
-      AppData.materialController.warningList(),
-    ]);
+    try {
+      final results = await Future.wait([
+        AppData.materialController.totalMaterial(),
+        AppData.materialController.totalInventory(),
+        AppData.materialController.warningMaterial(),
+        AppData.productController.totalProduct(),
+        AppData.deliveryController.totalDelivery(),
+        AppData.supplierController.total(),
+        AppData.materialController.getImportHistory(),
+        AppData.materialController.getExportHistory(),
+        AppData.materialController.warningList(),
+      ]);
 
-    if (!mounted) return;
-    setState(() {
-      totalMaterial = results[0] as int;
-      totalInventory = results[1] as int;
-      warningCount = results[2] as int;
-      totalProduct = results[3] as int;
-      totalDelivery = results[4] as int;
-      totalSupplier = results[5] as int;
-      imports = results[6] as List<ImportModel>;
-      exports = results[7] as List<ExportModel>;
-      warningMaterials = results[8] as List<MaterialModel>;
-      loading = false;
-    });
+      if (!mounted) return;
+      setState(() {
+        totalMaterial = results[0] as int;
+        totalInventory = results[1] as int;
+        warningCount = results[2] as int;
+        totalProduct = results[3] as int;
+        totalDelivery = results[4] as int;
+        totalSupplier = results[5] as int;
+        imports = results[6] as List<ImportModel>;
+        exports = results[7] as List<ExportModel>;
+        warningMaterials = results[8] as List<MaterialModel>;
+        loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => loading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Lỗi tải báo cáo: $e'), backgroundColor: Colors.red),
+      );
+    }
   }
 
   @override

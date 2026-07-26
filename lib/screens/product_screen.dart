@@ -41,11 +41,16 @@ class _ProductScreenState extends State<ProductScreen> {
   // Load danh sách
   //------------------------------------
   Future<void> refreshList() async {
-    products = await controller.search(searchController.text);
-
-    if (!mounted) return;
-
-    setState(() {});
+    try {
+      products = await controller.search(searchController.text);
+      if (!mounted) return;
+      setState(() {});
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Lỗi tải thành phẩm: $e'), backgroundColor: Colors.red),
+      );
+    }
   }
 
   //------------------------------------

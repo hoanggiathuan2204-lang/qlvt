@@ -1,6 +1,7 @@
 import 'dart:developer' as developer;
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -14,29 +15,23 @@ import 'theme/app_theme.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  //---------------------------------------
-  // Windows / Linux
-  //---------------------------------------
+  if (!kIsWeb) {
+    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+      sqfliteFfiInit();
+      databaseFactory = databaseFactoryFfi;
+    }
 
-  if (Platform.isWindows || Platform.isLinux) {
-    sqfliteFfiInit();
-    databaseFactory = databaseFactoryFfi;
+    final dbFolder = await getDatabasesPath();
+    final dbPath = p.join(dbFolder, "qlvt.db");
+
+    developer.log("================================");
+    developer.log("Database Folder : $dbFolder");
+    developer.log("Database File   : $dbPath");
+    developer.log("Database Exists : ${await File(dbPath).exists()}");
+    developer.log("================================");
   }
 
-  //---------------------------------------
-  // Database
-  //---------------------------------------
-
-  final dbFolder = await getDatabasesPath();
-  final dbPath = p.join(dbFolder, "qlvt.db");
-
   await FirebaseService.initialize();
-
-  developer.log("================================");
-  developer.log("Database Folder : $dbFolder");
-  developer.log("Database File   : $dbPath");
-  developer.log("Database Exists : ${await File(dbPath).exists()}");
-  developer.log("================================");
 
   runApp(const AnhDuongERP());
 }
@@ -106,8 +101,7 @@ class _LoginPageState extends State<LoginPage> {
           : '$username@company.local';
       await FirebaseService.signIn(email, password);
 
-      // Xác định role dựa trên email
-      String role = 'user'; // Default role
+      String role = 'user';
       if (email.toLowerCase() == 'owner@qlvt.app') {
         role = 'owner';
       } else if (email.toLowerCase() == 'accountant@qlvt.app' ||
@@ -157,9 +151,6 @@ class _LoginPageState extends State<LoginPage> {
             mainAxisSize: MainAxisSize.min,
 
             children: [
-              //---------------------------------
-              // Logo
-              //---------------------------------
               Image.asset("assets/images/logo.png", height: 110),
 
               const SizedBox(height: 20),
@@ -189,9 +180,6 @@ class _LoginPageState extends State<LoginPage> {
 
               const SizedBox(height: 35),
 
-              //---------------------------------
-              // Username
-              //---------------------------------
               TextField(
                 controller: usernameController,
                 decoration: const InputDecoration(
@@ -202,9 +190,6 @@ class _LoginPageState extends State<LoginPage> {
 
               const SizedBox(height: 20),
 
-              //---------------------------------
-              // Password
-              //---------------------------------
               TextField(
                 controller: passwordController,
                 obscureText: true,
@@ -217,9 +202,6 @@ class _LoginPageState extends State<LoginPage> {
 
               const SizedBox(height: 30),
 
-              //---------------------------------
-              // Button
-              //---------------------------------
               SizedBox(
                 width: double.infinity,
                 height: 52,

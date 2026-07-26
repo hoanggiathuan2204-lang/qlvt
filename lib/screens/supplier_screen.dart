@@ -34,9 +34,16 @@ class _SupplierScreenState extends State<SupplierScreen> {
   }
 
   Future<void> refreshList() async {
-    final result = await controller.search(searchController.text);
-    if (!mounted) return;
-    setState(() => suppliers = result);
+    try {
+      final result = await controller.search(searchController.text);
+      if (!mounted) return;
+      setState(() => suppliers = result);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Lỗi tải nhà cung cấp: $e'), backgroundColor: Colors.red),
+      );
+    }
   }
 
   Future<void> addSupplier() async {

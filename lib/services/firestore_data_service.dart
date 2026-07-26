@@ -21,11 +21,21 @@ class FirestoreDataService {
       _db.collection('deliveries');
 
   static Future<List<MaterialModel>> getMaterials() async {
-    final snapshot = await materialsRef.orderBy('tenVatTu').get();
-    return snapshot.docs.map((doc) {
-      final data = doc.data();
-      return MaterialModel.fromMap({...data, 'id': int.tryParse(doc.id) ?? 0});
-    }).toList();
+    try {
+      final snapshot = await materialsRef.orderBy('tenVatTu').get();
+      final list = <MaterialModel>[];
+      for (final doc in snapshot.docs) {
+        try {
+          final data = doc.data();
+          list.add(MaterialModel.fromMap({...data, 'id': _safeInt(doc.id)}));
+        } catch (e) {
+          continue;
+        }
+      }
+      return list;
+    } catch (e) {
+      rethrow;
+    }
   }
 
   static Future<void> addMaterial(MaterialModel material) async {
@@ -43,11 +53,21 @@ class FirestoreDataService {
   }
 
   static Future<List<ProductModel>> getProducts() async {
-    final snapshot = await productsRef.orderBy('tenSanPham').get();
-    return snapshot.docs.map((doc) {
-      final data = doc.data();
-      return ProductModel.fromMap({...data, 'id': int.tryParse(doc.id) ?? 0});
-    }).toList();
+    try {
+      final snapshot = await productsRef.orderBy('tenSanPham').get();
+      final list = <ProductModel>[];
+      for (final doc in snapshot.docs) {
+        try {
+          final data = doc.data();
+          list.add(ProductModel.fromMap({...data, 'id': _safeInt(doc.id)}));
+        } catch (e) {
+          continue;
+        }
+      }
+      return list;
+    } catch (e) {
+      rethrow;
+    }
   }
 
   static Future<void> addProduct(ProductModel product) async {
@@ -65,11 +85,21 @@ class FirestoreDataService {
   }
 
   static Future<List<SupplierModel>> getSuppliers() async {
-    final snapshot = await suppliersRef.orderBy('tenNCC').get();
-    return snapshot.docs.map((doc) {
-      final data = doc.data();
-      return SupplierModel.fromMap({...data, 'id': int.tryParse(doc.id) ?? 0});
-    }).toList();
+    try {
+      final snapshot = await suppliersRef.orderBy('tenNCC').get();
+      final list = <SupplierModel>[];
+      for (final doc in snapshot.docs) {
+        try {
+          final data = doc.data();
+          list.add(SupplierModel.fromMap({...data, 'id': _safeInt(doc.id)}));
+        } catch (e) {
+          continue;
+        }
+      }
+      return list;
+    } catch (e) {
+      rethrow;
+    }
   }
 
   static Future<int> addSupplier(SupplierModel supplier) async {
@@ -88,13 +118,23 @@ class FirestoreDataService {
   }
 
   static Future<List<DeliveryModel>> getDeliveries() async {
-    final snapshot = await deliveriesRef
-        .orderBy('thoiGian', descending: true)
-        .get();
-    return snapshot.docs.map((doc) {
-      final data = doc.data();
-      return DeliveryModel.fromMap({...data, 'id': int.tryParse(doc.id) ?? 0});
-    }).toList();
+    try {
+      final snapshot = await deliveriesRef
+          .orderBy('thoiGian', descending: true)
+          .get();
+      final list = <DeliveryModel>[];
+      for (final doc in snapshot.docs) {
+        try {
+          final data = doc.data();
+          list.add(DeliveryModel.fromMap({...data, 'id': _safeInt(doc.id)}));
+        } catch (e) {
+          continue;
+        }
+      }
+      return list;
+    } catch (e) {
+      rethrow;
+    }
   }
 
   static Future<int> addDelivery(DeliveryModel delivery) async {
@@ -104,7 +144,6 @@ class FirestoreDataService {
   }
 
   static Future<void> updateDelivery(DeliveryModel delivery) async {
-    if (delivery.id == 0) return;
     await deliveriesRef.doc(delivery.id.toString()).set(delivery.toMap());
   }
 
@@ -117,5 +156,9 @@ class FirestoreDataService {
     for (final doc in snapshot.docs) {
       await doc.reference.delete();
     }
+  }
+
+  static int _safeInt(String value) {
+    return int.tryParse(value) ?? DateTime.now().millisecondsSinceEpoch;
   }
 }

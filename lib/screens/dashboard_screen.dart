@@ -66,30 +66,38 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (!mounted) return;
     setState(() => loading = true);
 
-    final results = await Future.wait([
-      AppData.materialController.totalMaterial(),
-      AppData.productController.totalProduct(),
-      AppData.supplierController.total(),
-      AppData.deliveryController.totalDelivery(),
-      AppData.materialController.warningMaterial(),
-      AppData.materialController.totalInventory(),
-      AppData.materialController.warningList(),
-      AppData.deliveryController.newest(),
-    ]);
+    try {
+      final results = await Future.wait([
+        AppData.materialController.totalMaterial(),
+        AppData.productController.totalProduct(),
+        AppData.supplierController.total(),
+        AppData.deliveryController.totalDelivery(),
+        AppData.materialController.warningMaterial(),
+        AppData.materialController.totalInventory(),
+        AppData.materialController.warningList(),
+        AppData.deliveryController.newest(),
+      ]);
 
-    if (!mounted) return;
-    setState(() {
-      totalMaterial = results[0] as int;
-      totalProduct = results[1] as int;
-      totalSupplier = results[2] as int;
-      totalDelivery = results[3] as int;
-      warningCount = results[4] as int;
-      totalInventory = results[5] as int;
-      warningList = results[6] as List<MaterialModel>;
-      final all = results[7] as List<DeliveryModel>;
-      recentDeliveries = all.take(5).toList();
-      loading = false;
-    });
+      if (!mounted) return;
+      setState(() {
+        totalMaterial = results[0] as int;
+        totalProduct = results[1] as int;
+        totalSupplier = results[2] as int;
+        totalDelivery = results[3] as int;
+        warningCount = results[4] as int;
+        totalInventory = results[5] as int;
+        warningList = results[6] as List<MaterialModel>;
+        final all = results[7] as List<DeliveryModel>;
+        recentDeliveries = all.take(5).toList();
+        loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => loading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Lỗi tải dữ liệu: $e')),
+      );
+    }
   }
 
   @override

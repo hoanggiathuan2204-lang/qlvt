@@ -36,7 +36,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   bool loading = true;
 
-  /// Định dạng số kiểu Việt Nam (1,234,567) — không cần intl
   static String _fmt(int n) {
     final s = n.toString();
     final buf = StringBuffer();
@@ -47,7 +46,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return buf.toString();
   }
 
-  /// Định dạng ngày giờ — không cần intl
   static String _fmtDate(DateTime dt) {
     final d = dt.day.toString().padLeft(2, '0');
     final mo = dt.month.toString().padLeft(2, '0');
@@ -98,7 +96,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         SnackBar(
           content: Text('Lỗi tải dữ liệu dashboard: ${e.toString()}'),
           backgroundColor: Colors.red,
-          duration: const Duration(seconds: 5),
+          duration: const Duration(seconds: 10),
         ),
       );
     }
@@ -263,9 +261,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  //──────────────────────────────────────────────────────
-  // Widget: Giao hàng gần đây
-  //──────────────────────────────────────────────────────
   Widget _recentDeliveriesCard() {
     return _Card(
       child: Column(
@@ -330,9 +325,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  //──────────────────────────────────────────────────────
-  // Widget: Cảnh báo tồn kho
-  //──────────────────────────────────────────────────────
   Widget _warningCard() {
     return _Card(
       child: Column(
@@ -429,10 +421,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 }
-
-//──────────────────────────────────────────────────────
-// Shared widgets
-//──────────────────────────────────────────────────────
 
 class _Card extends StatelessWidget {
   final Widget child;

@@ -89,6 +89,9 @@ class _LoginPageState extends State<LoginPage> {
     final localUser = controller.login(username, password);
     if (localUser != null) {
       if (!mounted) return;
+      try {
+        await FirebaseService.signInAnonymously();
+      } catch (_) {}
       Navigator.of(
         context,
       ).pushReplacement(MaterialPageRoute(builder: (_) => const AppShell()));

@@ -51,6 +51,12 @@ class FirebaseService {
     return credential.user;
   }
 
+  static Future<User?> signInAnonymously() async {
+    if (!_configured) return null;
+    final credential = await auth.signInAnonymously();
+    return credential.user;
+  }
+
   static Future<void> signOut() async {
     if (!_configured) return;
     await auth.signOut();

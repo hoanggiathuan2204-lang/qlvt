@@ -62,54 +62,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Future<void> _loadData() async {
     if (!mounted) return;
-    setState(() => loading = true);
-
-    try {
-      totalMaterial = await AppData.materialController.totalMaterial();
-      if (!mounted) return;
-      setState(() {});
-
-      totalProduct = await AppData.productController.totalProduct();
-      if (!mounted) return;
-      setState(() {});
-
-      totalSupplier = await AppData.supplierController.total();
-      if (!mounted) return;
-      setState(() {});
-
-      totalDelivery = await AppData.deliveryController.totalDelivery();
-      if (!mounted) return;
-      setState(() {});
-
-      warningCount = await AppData.materialController.warningMaterial();
-      if (!mounted) return;
-      setState(() {});
-
-      totalInventory = await AppData.materialController.totalInventory();
-      if (!mounted) return;
-      setState(() {});
-
-      warningList = await AppData.materialController.warningList();
-      if (!mounted) return;
-      setState(() {});
-
-      final all = await AppData.deliveryController.newest();
-      if (!mounted) return;
-      setState(() {
-        recentDeliveries = all.take(5).toList();
-        loading = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => loading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Lỗi tải dữ liệu dashboard: ${e.toString()}'),
-          backgroundColor: Colors.red,
-          duration: const Duration(seconds: 10),
-        ),
-      );
-    }
+    setState(() => loading = false);
   }
 
   @override

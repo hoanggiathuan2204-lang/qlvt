@@ -95,9 +95,9 @@ class _LoginPageState extends State<LoginPage> {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Lỗi đăng nhập Firebase: ${e.toString()}'),
+            content: Text('Lỗi đăng nhập Firebase ẩn danh: ${e.toString()}'),
             backgroundColor: Colors.red,
-            duration: const Duration(seconds: 5),
+            duration: const Duration(seconds: 10),
           ),
         );
       }

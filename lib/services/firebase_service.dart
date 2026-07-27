@@ -28,7 +28,8 @@ class FirebaseService {
 
       await Firebase.initializeApp(options: options);
       _configured = true;
-    } catch (_) {
+    } catch (e) {
+      print('Firebase init error: $e');
       _configured = false;
     } finally {
       _initialized = true;

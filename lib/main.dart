@@ -72,6 +72,31 @@ class _LoginPageState extends State<LoginPage> {
     final localUser = controller.login(username, password);
     if (localUser != null) {
       if (!mounted) return;
+      try {
+        final fbUser = await FirebaseService.signInAnonymously();
+        if (fbUser == null && FirebaseService.isConfigured) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Không thể đăng nhập Firebase. Vui lòng thử lại.'),
+              backgroundColor: Colors.red,
+              duration: Duration(seconds: 5),
+            ),
+          );
+          return;
+        }
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Lỗi đăng nhập Firebase: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+        return;
+      }
+      if (!mounted) return;
       Navigator.of(
         context,
       ).pushReplacement(MaterialPageRoute(builder: (_) => const AppShell()));

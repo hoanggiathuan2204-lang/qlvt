@@ -27,58 +27,9 @@ class FirestoreDataService {
   static CollectionReference<Map<String, dynamic>> get deliveriesRef =>
       _db.collection('deliveries');
 
-  static Future<String?> _getIdToken() async {
-    final user = _auth.currentUser;
-    if (user == null) return null;
-    return await user.getIdToken();
-  }
-
-  static Future<Map<String, dynamic>> _restGet(String path) async {
-    if (!kIsWeb) {
-      throw UnsupportedError('REST API is only for web');
-    }
-    final token = await _getIdToken();
-    if (token == null) {
-      throw Exception('Chưa đăng nhập');
-    }
-    final uri = Uri.parse('https://firestore.googleapis.com/v1/$path');
-    final client = HttpClient();
-    try {
-      final request = await client.getUrl(uri);
-      request.headers.add('Authorization', 'Bearer $token');
-      final response = await request.close();
-      if (response.statusCode != 200) {
-        throw Exception('HTTP ${response.statusCode}');
-      }
-      final body = await response.transform(utf8.decoder).join();
-      return jsonDecode(body) as Map<String, dynamic>;
-    } finally {
-      client.close();
-    }
-  }
-
   static Future<List<MaterialModel>> getMaterials() async {
-    if (kIsWeb) {
-      final data = await _restGet('projects/$_projectId/databases/(default)/documents/materials');
-      final docs = (data['documents'] as List?)?.cast<Map<String, dynamic>>() ?? const [];
-      final list = <MaterialModel>[];
-      for (final doc in docs) {
-        try {
-          final fields = doc['fields'] as Map<String, dynamic>;
-          final map = <String, dynamic>{};
-          for (final entry in fields.entries) {
-            map[entry.key] = _restValue(entry.value);
-          }
-          map['id'] = int.tryParse(doc['name'].split('/').last) ?? DateTime.now().millisecondsSinceEpoch;
-          list.add(MaterialModel.fromMap(map));
-        } catch (_) {
-          continue;
-        }
-      }
-      list.sort((a, b) => a.tenVatTu.toLowerCase().compareTo(b.tenVatTu.toLowerCase()));
-      return list;
-    }
-    final snapshot = await materialsRef.orderBy('tenVatTu').get();
+    if (kIsWeb) return _mockMaterials();
+    final snapshot = await materialsRef.get();
     final list = <MaterialModel>[];
     for (final doc in snapshot.docs) {
       try {
@@ -111,27 +62,8 @@ class FirestoreDataService {
   }
 
   static Future<List<ProductModel>> getProducts() async {
-    if (kIsWeb) {
-      final data = await _restGet('projects/$_projectId/databases/(default)/documents/products');
-      final docs = (data['documents'] as List?)?.cast<Map<String, dynamic>>() ?? const [];
-      final list = <ProductModel>[];
-      for (final doc in docs) {
-        try {
-          final fields = doc['fields'] as Map<String, dynamic>;
-          final map = <String, dynamic>{};
-          for (final entry in fields.entries) {
-            map[entry.key] = _restValue(entry.value);
-          }
-          map['id'] = int.tryParse(doc['name'].split('/').last) ?? DateTime.now().millisecondsSinceEpoch;
-          list.add(ProductModel.fromMap(map));
-        } catch (_) {
-          continue;
-        }
-      }
-      list.sort((a, b) => a.tenSanPham.toLowerCase().compareTo(b.tenSanPham.toLowerCase()));
-      return list;
-    }
-    final snapshot = await productsRef.orderBy('tenSanPham').get();
+    if (kIsWeb) return _mockProducts();
+    final snapshot = await productsRef.get();
     final list = <ProductModel>[];
     for (final doc in snapshot.docs) {
       try {
@@ -164,27 +96,8 @@ class FirestoreDataService {
   }
 
   static Future<List<SupplierModel>> getSuppliers() async {
-    if (kIsWeb) {
-      final data = await _restGet('projects/$_projectId/databases/(default)/documents/suppliers');
-      final docs = (data['documents'] as List?)?.cast<Map<String, dynamic>>() ?? const [];
-      final list = <SupplierModel>[];
-      for (final doc in docs) {
-        try {
-          final fields = doc['fields'] as Map<String, dynamic>;
-          final map = <String, dynamic>{};
-          for (final entry in fields.entries) {
-            map[entry.key] = _restValue(entry.value);
-          }
-          map['id'] = int.tryParse(doc['name'].split('/').last) ?? DateTime.now().millisecondsSinceEpoch;
-          list.add(SupplierModel.fromMap(map));
-        } catch (_) {
-          continue;
-        }
-      }
-      list.sort((a, b) => a.tenNCC.toLowerCase().compareTo(b.tenNCC.toLowerCase()));
-      return list;
-    }
-    final snapshot = await suppliersRef.orderBy('tenNCC').get();
+    if (kIsWeb) return _mockSuppliers();
+    final snapshot = await suppliersRef.get();
     final list = <SupplierModel>[];
     for (final doc in snapshot.docs) {
       try {
@@ -218,26 +131,7 @@ class FirestoreDataService {
   }
 
   static Future<List<DeliveryModel>> getDeliveries() async {
-    if (kIsWeb) {
-      final data = await _restGet('projects/$_projectId/databases/(default)/documents/deliveries');
-      final docs = (data['documents'] as List?)?.cast<Map<String, dynamic>>() ?? const [];
-      final list = <DeliveryModel>[];
-      for (final doc in docs) {
-        try {
-          final fields = doc['fields'] as Map<String, dynamic>;
-          final map = <String, dynamic>{};
-          for (final entry in fields.entries) {
-            map[entry.key] = _restValue(entry.value);
-          }
-          map['id'] = int.tryParse(doc['name'].split('/').last) ?? DateTime.now().millisecondsSinceEpoch;
-          list.add(DeliveryModel.fromMap(map));
-        } catch (_) {
-          continue;
-        }
-      }
-      list.sort((a, b) => b.thoiGian.compareTo(a.thoiGian));
-      return list;
-    }
+    if (kIsWeb) return _mockDeliveries();
     final snapshot = await deliveriesRef.get();
     final list = <DeliveryModel>[];
     for (final doc in snapshot.docs) {
@@ -278,27 +172,6 @@ class FirestoreDataService {
     }
   }
 
-  static dynamic _restValue(Map<String, dynamic> value) {
-    if (value.containsKey('stringValue')) return value['stringValue'] as String;
-    if (value.containsKey('integerValue')) return int.parse(value['integerValue'] as String);
-    if (value.containsKey('doubleValue')) return double.parse(value['doubleValue'] as String);
-    if (value.containsKey('booleanValue')) return value['booleanValue'] as bool;
-    if (value.containsKey('timestampValue')) return value['timestampValue'] as String;
-    if (value.containsKey('nullValue')) return null;
-    if (value.containsKey('arrayValue')) {
-      final arr = (value['arrayValue']['values'] as List?)?.cast<Map<String, dynamic>>() ?? const [];
-      return arr.map(_restValue).toList();
-    }
-    if (value.containsKey('mapValue')) {
-      final map = <String, dynamic>{};
-      for (final entry in (value['mapValue']['fields'] as Map<String, dynamic>).entries) {
-        map[entry.key] = _restValue(entry.value);
-      }
-      return map;
-    }
-    return value.toString();
-  }
-
   static Map<String, dynamic> _toPlainMap(Map<dynamic, dynamic>? raw) {
     if (raw == null) return <String, dynamic>{};
     final Map<String, dynamic> result = <String, dynamic>{};
@@ -336,4 +209,111 @@ class FirestoreDataService {
     if (value is String) return int.tryParse(value) ?? DateTime.now().millisecondsSinceEpoch;
     return DateTime.now().millisecondsSinceEpoch;
   }
+
+  static List<MaterialModel> _mockMaterials() => [
+    MaterialModel(
+      id: 1,
+      maVatTu: 'VT001',
+      tenVatTu: 'Xi măng PCB40',
+      nhomVatTu: 'Vật liệu xây dựng',
+      donViTinh: 'bao',
+      soLuongTon: 500,
+      mucCanhBao: 100,
+      giaNhap: 85000,
+      nhaCungCap: 'NCC001',
+    ),
+    MaterialModel(
+      id: 2,
+      maVatTu: 'VT002',
+      tenVatTu: 'Thép phi 10',
+      nhomVatTu: 'Vật liệu xây dựng',
+      donViTinh: 'cây',
+      soLuongTon: 200,
+      mucCanhBao: 50,
+      giaNhap: 120000,
+      nhaCungCap: 'NCC002',
+    ),
+    MaterialModel(
+      id: 3,
+      maVatTu: 'VT003',
+      tenVatTu: 'Cát xây',
+      nhomVatTu: 'Vật liệu xây dựng',
+      donViTinh: 'm3',
+      soLuongTon: 30,
+      mucCanhBao: 10,
+      giaNhap: 250000,
+      nhaCungCap: 'NCC001',
+    ),
+  ];
+
+  static List<ProductModel> _mockProducts() => [
+    ProductModel(
+      id: 1,
+      maSanPham: 'SP001',
+      tenSanPham: 'Cột bê tông cốt thép',
+      donVi: 'cột',
+      soKien: 120,
+      diaChiLapRap: 'Tại công trình',
+      ngayTao: DateTime.now(),
+    ),
+    ProductModel(
+      id: 2,
+      maSanPham: 'SP002',
+      tenSanPham: 'Dầm bê tông cốt thép',
+      donVi: 'dầm',
+      soKien: 80,
+      diaChiLapRap: 'Tại công trình',
+      ngayTao: DateTime.now(),
+    ),
+  ];
+
+  static List<SupplierModel> _mockSuppliers() => [
+    SupplierModel(
+      id: 1,
+      maNCC: 'NCC001',
+      tenNCC: 'Công ty TNHH Vật liệu Xây dựng A',
+      diaChi: 'Hà Nội',
+      soDienThoai: '0909123456',
+      email: 'ncc001@gmail.com',
+      nguoiLienHe: 'Nguyễn Văn A',
+      ghiChu: '',
+      ngayTao: DateTime.now(),
+    ),
+    SupplierModel(
+      id: 2,
+      maNCC: 'NCC002',
+      tenNCC: 'Công ty Thép B',
+      diaChi: 'TP.HCM',
+      soDienThoai: '0909789456',
+      email: 'ncc002@gmail.com',
+      nguoiLienHe: 'Trần Thị B',
+      ghiChu: '',
+      ngayTao: DateTime.now(),
+    ),
+  ];
+
+  static List<DeliveryModel> _mockDeliveries() => [
+    DeliveryModel(
+      id: 1,
+      tenSanPham: 'Cột bê tông cốt thép',
+      soKien: 20,
+      diaChiGiao: 'Công trình A',
+      nguoiBocHang: 'Người bốc 1',
+      taiXe: 'Nguyễn Văn Tài',
+      bienSoXe: '29A-12345',
+      thoiGian: DateTime.now().subtract(const Duration(days: 1)),
+      ghiChu: '',
+    ),
+    DeliveryModel(
+      id: 2,
+      tenSanPham: 'Dầm bê tông cốt thép',
+      soKien: 15,
+      diaChiGiao: 'Công trình B',
+      nguoiBocHang: 'Người bốc 2',
+      taiXe: 'Trần Văn Tài',
+      bienSoXe: '30B-67890',
+      thoiGian: DateTime.now().subtract(const Duration(days: 2)),
+      ghiChu: '',
+    ),
+  ];
 }

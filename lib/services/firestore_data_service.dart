@@ -174,23 +174,23 @@ class FirestoreDataService {
         result[k] = null;
         continue;
       }
-      if (value is DateTime) {
-        result[k] = value.toIso8601String();
+      if (value is String || value is int || value is double || value is bool) {
+        result[k] = value;
         continue;
       }
       try {
-        final dynamic d = value;
-        final dt = d.toDate();
+        final dt = (value as dynamic).toDate();
         if (dt is DateTime) {
           result[k] = dt.toIso8601String();
           continue;
         }
       } catch (_) {}
-
       if (value is Map) {
         result[k] = _toPlainMap(value);
+      } else if (value is List) {
+        result[k] = value.map((e) => _toPlainMap(e is Map ? e : <dynamic, dynamic>{})).toList();
       } else {
-        result[k] = value;
+        result[k] = value.toString();
       }
     }
     return result;

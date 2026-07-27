@@ -1,8 +1,4 @@
-import 'dart:convert';
-import 'dart:io';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
 import '../models/delivery_model.dart';
@@ -12,8 +8,6 @@ import '../models/supplier_model.dart';
 
 class FirestoreDataService {
   static final FirebaseFirestore _db = FirebaseFirestore.instance;
-  static final FirebaseAuth _auth = FirebaseAuth.instance;
-  static const _projectId = 'qlvt-4d1fc';
 
   static CollectionReference<Map<String, dynamic>> get materialsRef =>
       _db.collection('materials');

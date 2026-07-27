@@ -110,6 +110,9 @@ class ImportModel {
         return null;
       }
     }
+    try {
+      return (value as dynamic).toDate();
+    } catch (_) {}
     return null;
   }
 }

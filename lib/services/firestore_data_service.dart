@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/delivery_model.dart';
@@ -24,19 +22,21 @@ class FirestoreDataService {
 
   static Future<List<MaterialModel>> getMaterials() async {
     try {
-      final snapshot = await materialsRef.orderBy('tenVatTu').get();
+      final snapshot = await materialsRef.get();
       final list = <MaterialModel>[];
       for (final doc in snapshot.docs) {
         try {
           final data = _toPlainMap(doc.data());
-          list.add(MaterialModel.fromMap({...data, 'id': _safeInt(doc.id)}));
-        } catch (e) {
+          data['id'] = _safeInt(doc.id);
+          list.add(MaterialModel.fromMap(data));
+        } catch (_) {
           continue;
         }
       }
+      list.sort((a, b) => a.tenVatTu.toLowerCase().compareTo(b.tenVatTu.toLowerCase()));
       return list;
-    } catch (e) {
-      rethrow;
+    } catch (_) {
+      return <MaterialModel>[];
     }
   }
 
@@ -56,19 +56,21 @@ class FirestoreDataService {
 
   static Future<List<ProductModel>> getProducts() async {
     try {
-      final snapshot = await productsRef.orderBy('tenSanPham').get();
+      final snapshot = await productsRef.get();
       final list = <ProductModel>[];
       for (final doc in snapshot.docs) {
         try {
           final data = _toPlainMap(doc.data());
-          list.add(ProductModel.fromMap({...data, 'id': _safeInt(doc.id)}));
-        } catch (e) {
+          data['id'] = _safeInt(doc.id);
+          list.add(ProductModel.fromMap(data));
+        } catch (_) {
           continue;
         }
       }
+      list.sort((a, b) => a.tenSanPham.toLowerCase().compareTo(b.tenSanPham.toLowerCase()));
       return list;
-    } catch (e) {
-      rethrow;
+    } catch (_) {
+      return <ProductModel>[];
     }
   }
 
@@ -88,19 +90,21 @@ class FirestoreDataService {
 
   static Future<List<SupplierModel>> getSuppliers() async {
     try {
-      final snapshot = await suppliersRef.orderBy('tenNCC').get();
+      final snapshot = await suppliersRef.get();
       final list = <SupplierModel>[];
       for (final doc in snapshot.docs) {
         try {
           final data = _toPlainMap(doc.data());
-          list.add(SupplierModel.fromMap({...data, 'id': _safeInt(doc.id)}));
-        } catch (e) {
+          data['id'] = _safeInt(doc.id);
+          list.add(SupplierModel.fromMap(data));
+        } catch (_) {
           continue;
         }
       }
+      list.sort((a, b) => a.tenNCC.toLowerCase().compareTo(b.tenNCC.toLowerCase()));
       return list;
-    } catch (e) {
-      rethrow;
+    } catch (_) {
+      return <SupplierModel>[];
     }
   }
 
@@ -121,21 +125,21 @@ class FirestoreDataService {
 
   static Future<List<DeliveryModel>> getDeliveries() async {
     try {
-      final snapshot = await deliveriesRef
-          .orderBy('thoiGian', descending: true)
-          .get();
+      final snapshot = await deliveriesRef.get();
       final list = <DeliveryModel>[];
       for (final doc in snapshot.docs) {
         try {
           final data = _toPlainMap(doc.data());
-          list.add(DeliveryModel.fromMap({...data, 'id': _safeInt(doc.id)}));
-        } catch (e) {
+          data['id'] = _safeInt(doc.id);
+          list.add(DeliveryModel.fromMap(data));
+        } catch (_) {
           continue;
         }
       }
+      list.sort((a, b) => b.thoiGian.compareTo(a.thoiGian));
       return list;
-    } catch (e) {
-      rethrow;
+    } catch (_) {
+      return <DeliveryModel>[];
     }
   }
 
@@ -160,18 +164,41 @@ class FirestoreDataService {
     }
   }
 
-  static Map<String, dynamic> _toPlainMap(Map<String, dynamic> raw) {
-    try {
-      final encoded = jsonEncode(raw);
-      final decoded = jsonDecode(encoded);
-      if (decoded is Map<String, dynamic>) return decoded;
-      return <String, dynamic>{};
-    } catch (_) {
-      return <String, dynamic>{};
+  static Map<String, dynamic> _toPlainMap(Map<dynamic, dynamic>? raw) {
+    if (raw == null) return <String, dynamic>{};
+    final Map<String, dynamic> result = <String, dynamic>{};
+    for (final entry in raw.entries) {
+      final String k = entry.key.toString();
+      final dynamic value = entry.value;
+      if (value == null) {
+        result[k] = null;
+        continue;
+      }
+      if (value is DateTime) {
+        result[k] = value.toIso8601String();
+        continue;
+      }
+      try {
+        final dynamic d = value;
+        final dt = d.toDate();
+        if (dt is DateTime) {
+          result[k] = dt.toIso8601String();
+          continue;
+        }
+      } catch (_) {}
+
+      if (value is Map) {
+        result[k] = _toPlainMap(value);
+      } else {
+        result[k] = value;
+      }
     }
+    return result;
   }
 
-  static int _safeInt(String value) {
-    return int.tryParse(value) ?? DateTime.now().millisecondsSinceEpoch;
+  static int _safeInt(dynamic value) {
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value) ?? DateTime.now().millisecondsSinceEpoch;
+    return DateTime.now().millisecondsSinceEpoch;
   }
 }

@@ -62,7 +62,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Future<void> _loadData() async {
     if (!mounted) return;
-    setState(() => loading = false);
+    setState(() {
+      totalMaterial = 0;
+      totalProduct = 0;
+      totalSupplier = 0;
+      totalDelivery = 0;
+      warningCount = 0;
+      totalInventory = 0;
+      warningList = [];
+      recentDeliveries = [];
+      loading = false;
+    });
   }
 
   @override

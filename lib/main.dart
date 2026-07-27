@@ -1,10 +1,7 @@
 import 'dart:developer' as developer;
-import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:path/path.dart' as p;
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import 'controllers/login_controller.dart';
 import 'screens/app_shell.dart';
@@ -16,18 +13,8 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   if (!kIsWeb) {
-    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-      sqfliteFfiInit();
-      databaseFactory = databaseFactoryFfi;
-    }
-
-    final dbFolder = await getDatabasesPath();
-    final dbPath = p.join(dbFolder, "qlvt.db");
-
     developer.log("================================");
-    developer.log("Database Folder : $dbFolder");
-    developer.log("Database File   : $dbPath");
-    developer.log("Database Exists : ${await File(dbPath).exists()}");
+    developer.log("Running on desktop platform");
     developer.log("================================");
   }
 
@@ -60,9 +47,7 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final LoginController controller = LoginController();
-
   final usernameController = TextEditingController();
-
   final passwordController = TextEditingController();
 
   @override
@@ -79,28 +64,13 @@ class _LoginPageState extends State<LoginPage> {
     if (username.isEmpty || password.isEmpty) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Vui lòng nhập tên đăng nhập và mật khẩu.'),
-        ),
+        const SnackBar(content: Text('Vui lòng nhập tên đăng nhập và mật khẩu.')),
       );
       return;
     }
 
     final localUser = controller.login(username, password);
     if (localUser != null) {
-      if (!mounted) return;
-      try {
-        await FirebaseService.signInAnonymously();
-      } catch (e) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Lỗi đăng nhập Firebase ẩn danh: ${e.toString()}'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 10),
-          ),
-        );
-      }
       if (!mounted) return;
       Navigator.of(
         context,
@@ -141,13 +111,10 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xffF4F7FC),
-
       body: Center(
         child: Container(
           width: 430,
-
           padding: const EdgeInsets.all(35),
-
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(22),
@@ -159,22 +126,16 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ],
           ),
-
           child: Column(
             mainAxisSize: MainAxisSize.min,
-
             children: [
               Image.asset("assets/images/logo.png", height: 110),
-
               const SizedBox(height: 20),
-
               const Text(
                 "CÔNG TY CỔ PHẦN",
                 style: TextStyle(fontSize: 15, color: Colors.grey),
               ),
-
               const SizedBox(height: 5),
-
               const Text(
                 "ÁNH DƯƠNG",
                 style: TextStyle(
@@ -183,16 +144,12 @@ class _LoginPageState extends State<LoginPage> {
                   color: Color(0xff0D4F8B),
                 ),
               ),
-
               const SizedBox(height: 8),
-
               const Text(
                 "ERP - Hệ thống Quản lý vật tư",
                 style: TextStyle(color: Colors.grey, fontSize: 15),
               ),
-
               const SizedBox(height: 35),
-
               TextField(
                 controller: usernameController,
                 decoration: const InputDecoration(
@@ -200,9 +157,7 @@ class _LoginPageState extends State<LoginPage> {
                   prefixIcon: Icon(Icons.person),
                 ),
               ),
-
               const SizedBox(height: 20),
-
               TextField(
                 controller: passwordController,
                 obscureText: true,
@@ -212,25 +167,19 @@ class _LoginPageState extends State<LoginPage> {
                   prefixIcon: Icon(Icons.lock),
                 ),
               ),
-
               const SizedBox(height: 30),
-
               SizedBox(
                 width: double.infinity,
                 height: 52,
-
                 child: ElevatedButton(
                   onPressed: login,
-
                   child: const Text(
                     "ĐĂNG NHẬP",
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ),
               ),
-
               const SizedBox(height: 20),
-
               const Text(
                 "© 2025 Công ty Cổ phần Ánh Dương",
                 style: TextStyle(color: Colors.grey, fontSize: 12),

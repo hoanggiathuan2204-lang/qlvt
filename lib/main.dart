@@ -1,5 +1,6 @@
 import 'dart:developer' as developer;
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
@@ -7,6 +8,8 @@ import 'controllers/login_controller.dart';
 import 'screens/app_shell.dart';
 import 'services/auth_service.dart';
 import 'services/firebase_service.dart';
+import 'services/web_storage.dart';
+import 'services/web_window.dart';
 import 'theme/app_theme.dart';
 
 Future<void> main() async {
@@ -49,12 +52,101 @@ class _LoginPageState extends State<LoginPage> {
   final LoginController controller = LoginController();
   final usernameController = TextEditingController();
   final passwordController = TextEditingController();
+  final emailController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _checkEmailLink();
+    _tryAutoLogin();
+  }
+
+  Future<void> _checkEmailLink() async {
+    if (!kIsWeb) return;
+    final href = WebWindow.currentUrl;
+    if (href.isEmpty) return;
+    if (!FirebaseService.isSignInWithEmailLink(href)) return;
+
+    final savedEmail = WebStorage.getItem('email_for_sign_in');
+    if (savedEmail == null || savedEmail.isEmpty) return;
+
+    try {
+      await FirebaseService.signInWithEmailLink(savedEmail, href);
+      WebStorage.removeItem('email_for_sign_in');
+      if (!mounted) return;
+      _completeEmailLinkLogin();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Đăng nhập bằng link thất bại: $e')),
+      );
+    }
+  }
+
+  Future<void> _completeEmailLinkLogin() async {
+    final user = FirebaseService.auth.currentUser;
+    if (user == null) return;
+    final email = user.email?.toLowerCase() ?? '';
+    String role = 'user';
+    if (email == 'owner@qlvt.app') {
+      role = 'owner';
+    } else if (email == 'accountant@qlvt.app' || email == 'ketoan@qlvt.app') {
+      role = 'accountant';
+    }
+    AuthService.instance.login(
+      AuthUser(username: email, role: role, displayName: email),
+    );
+    if (!mounted) return;
+    _navigateToApp();
+  }
+
+  Future<void> _tryAutoLogin() async {
+    final user = FirebaseService.auth.currentUser;
+    if (user == null) return;
+    if (user.email == null) return;
+    await _completeEmailLinkLogin();
+  }
+
+  void _navigateToApp() {
+    Navigator.of(
+      context,
+    ).pushReplacement(MaterialPageRoute(builder: (_) => const AppShell()));
+  }
 
   @override
   void dispose() {
     usernameController.dispose();
     passwordController.dispose();
+    emailController.dispose();
     super.dispose();
+  }
+
+  Future<void> _sendMagicLink() async {
+    final email = emailController.text.trim();
+    if (email.isEmpty || !email.contains('@')) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vui lòng nhập email hợp lệ.')),
+      );
+      return;
+    }
+
+    try {
+      await FirebaseService.sendSignInLinkToEmail(email);
+      WebStorage.setItem('email_for_sign_in', email);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Đã gửi link đăng nhập. Vui lòng kiểm tra email.'),
+          duration: Duration(seconds: 4),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gửi link thất bại: $e')),
+      );
+    }
   }
 
   Future<void> login() async {
@@ -85,6 +177,18 @@ class _LoginPageState extends State<LoginPage> {
           );
           return;
         }
+      } on FirebaseAuthException catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Lỗi Firebase [${e.code}]: ${e.message ?? "Không rõ nguyên nhân"}',
+            ),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 6),
+          ),
+        );
+        return;
       } catch (e) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
@@ -178,7 +282,7 @@ class _LoginPageState extends State<LoginPage> {
               TextField(
                 controller: usernameController,
                 decoration: const InputDecoration(
-                  labelText: "Email đăng nhập",
+                  labelText: "Tên đăng nhập",
                   prefixIcon: Icon(Icons.person),
                 ),
               ),
@@ -202,6 +306,31 @@ class _LoginPageState extends State<LoginPage> {
                     "ĐĂNG NHẬP",
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Divider(),
+              const SizedBox(height: 16),
+              const Text(
+                "Hoặc đăng nhập bằng link",
+                style: TextStyle(fontSize: 14, color: Colors.grey),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: emailController,
+                decoration: const InputDecoration(
+                  labelText: "Email",
+                  prefixIcon: Icon(Icons.email),
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton.icon(
+                  onPressed: _sendMagicLink,
+                  icon: const Icon(Icons.send),
+                  label: const Text("Gửi link đăng nhập"),
                 ),
               ),
               const SizedBox(height: 20),

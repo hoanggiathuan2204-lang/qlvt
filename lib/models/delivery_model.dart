@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class DeliveryModel {
   int id;
   String tenSanPham;
@@ -9,6 +11,7 @@ class DeliveryModel {
   DateTime thoiGian;
   String ghiChu;
   String? imagePath;
+  String? userId;
 
   DeliveryModel({
     required this.id,
@@ -21,6 +24,7 @@ class DeliveryModel {
     required this.thoiGian,
     required this.ghiChu,
     this.imagePath,
+    this.userId,
   });
 
   DeliveryModel copyWith({
@@ -34,6 +38,7 @@ class DeliveryModel {
     DateTime? thoiGian,
     String? ghiChu,
     String? imagePath,
+    String? userId,
   }) {
     return DeliveryModel(
       id: id ?? this.id,
@@ -46,6 +51,7 @@ class DeliveryModel {
       thoiGian: thoiGian ?? this.thoiGian,
       ghiChu: ghiChu ?? this.ghiChu,
       imagePath: imagePath ?? this.imagePath,
+      userId: userId ?? this.userId,
     );
   }
 
@@ -61,6 +67,7 @@ class DeliveryModel {
       thoiGian: _toDate(map['thoiGian']) ?? DateTime.now(),
       ghiChu: _toString(map['ghiChu']),
       imagePath: _toStringOrNull(map['imagePath']),
+      userId: _toStringOrNull(map['userId']),
     );
   }
 
@@ -76,6 +83,7 @@ class DeliveryModel {
       "thoiGian": thoiGian.toIso8601String(),
       "ghiChu": ghiChu,
       "imagePath": imagePath,
+      if (userId != null) "userId": userId,
     };
   }
 
@@ -100,6 +108,7 @@ class DeliveryModel {
 
   static DateTime? _toDate(dynamic value) {
     if (value is DateTime) return value;
+    if (value is Timestamp) return value.toDate();
     if (value is String) {
       try {
         return DateTime.parse(value);

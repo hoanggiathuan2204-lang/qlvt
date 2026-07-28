@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class ProductModel {
   int id;
   String maSanPham;
@@ -6,6 +8,7 @@ class ProductModel {
   int soKien;
   String diaChiLapRap;
   DateTime ngayTao;
+  String? userId;
 
   ProductModel({
     required this.id,
@@ -15,6 +18,7 @@ class ProductModel {
     required this.soKien,
     required this.diaChiLapRap,
     required this.ngayTao,
+    this.userId,
   });
 
   ProductModel copyWith({
@@ -25,6 +29,7 @@ class ProductModel {
     int? soKien,
     String? diaChiLapRap,
     DateTime? ngayTao,
+    String? userId,
   }) {
     return ProductModel(
       id: id ?? this.id,
@@ -34,6 +39,7 @@ class ProductModel {
       soKien: soKien ?? this.soKien,
       diaChiLapRap: diaChiLapRap ?? this.diaChiLapRap,
       ngayTao: ngayTao ?? this.ngayTao,
+      userId: userId ?? this.userId,
     );
   }
 
@@ -46,6 +52,7 @@ class ProductModel {
       soKien: _toInt(map['soKien']),
       diaChiLapRap: _toString(map['diaChiLapRap']),
       ngayTao: _toDate(map['ngayTao']) ?? DateTime.now(),
+      userId: _toStringOrNull(map['userId']),
     );
   }
 
@@ -58,7 +65,13 @@ class ProductModel {
       'soKien': soKien,
       'diaChiLapRap': diaChiLapRap,
       'ngayTao': ngayTao.toIso8601String(),
+      if (userId != null) 'userId': userId,
     };
+  }
+
+  static String? _toStringOrNull(dynamic value) {
+    if (value == null) return null;
+    return value.toString();
   }
 
   static int _toInt(dynamic value) {
@@ -77,6 +90,7 @@ class ProductModel {
 
   static DateTime? _toDate(dynamic value) {
     if (value is DateTime) return value;
+    if (value is Timestamp) return value.toDate();
     if (value is String) {
       try {
         return DateTime.parse(value);

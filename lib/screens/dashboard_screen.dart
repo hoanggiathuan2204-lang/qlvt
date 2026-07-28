@@ -105,9 +105,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       case 2:
         return const SupplierScreen();
       case 3:
-        return const ProductScreen();
+        return const ProductScreen(showSidebar: false);
       case 4:
-        return const DeliveryHistoryScreen();
+        return const DeliveryHistoryScreen(showSidebar: false);
       case 5:
         return const ReportScreen();
       default:

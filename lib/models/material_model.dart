@@ -8,6 +8,7 @@ class MaterialModel {
   int mucCanhBao;
   double giaNhap;
   String nhaCungCap;
+  String? userId;
 
   MaterialModel({
     required this.id,
@@ -19,6 +20,7 @@ class MaterialModel {
     required this.mucCanhBao,
     required this.giaNhap,
     required this.nhaCungCap,
+    this.userId,
   });
 
   MaterialModel copyWith({
@@ -31,6 +33,7 @@ class MaterialModel {
     int? mucCanhBao,
     double? giaNhap,
     String? nhaCungCap,
+    String? userId,
   }) {
     return MaterialModel(
       id: id ?? this.id,
@@ -42,6 +45,7 @@ class MaterialModel {
       mucCanhBao: mucCanhBao ?? this.mucCanhBao,
       giaNhap: giaNhap ?? this.giaNhap,
       nhaCungCap: nhaCungCap ?? this.nhaCungCap,
+      userId: userId ?? this.userId,
     );
   }
 
@@ -56,6 +60,7 @@ class MaterialModel {
       mucCanhBao: _toInt(map['mucCanhBao']),
       giaNhap: _toDouble(map['giaNhap']),
       nhaCungCap: _toString(map['nhaCungCap']),
+      userId: _toStringOrNull(map['userId']),
     );
   }
 
@@ -70,7 +75,13 @@ class MaterialModel {
       "mucCanhBao": mucCanhBao,
       "giaNhap": giaNhap,
       "nhaCungCap": nhaCungCap,
+      if (userId != null) "userId": userId,
     };
+  }
+
+  static String? _toStringOrNull(dynamic value) {
+    if (value == null) return null;
+    return value.toString();
   }
 
   static int _toInt(dynamic value) {

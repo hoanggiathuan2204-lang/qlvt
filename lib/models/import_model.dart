@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class ImportModel {
   int id;
   int materialId;
@@ -103,6 +105,7 @@ class ImportModel {
 
   static DateTime? _toDate(dynamic value) {
     if (value is DateTime) return value;
+    if (value is Timestamp) return value.toDate();
     if (value is String) {
       try {
         return DateTime.parse(value);

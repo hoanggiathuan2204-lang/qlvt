@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../data/app_data.dart';
@@ -7,7 +8,8 @@ import '../models/delivery_model.dart';
 import '../widgets/delivery_dialog.dart';
 
 class DeliveryHistoryScreen extends StatefulWidget {
-  const DeliveryHistoryScreen({super.key});
+  final bool showSidebar;
+  const DeliveryHistoryScreen({super.key, this.showSidebar = true});
 
   @override
   State<DeliveryHistoryScreen> createState() => _DeliveryHistoryScreenState();
@@ -15,9 +17,7 @@ class DeliveryHistoryScreen extends StatefulWidget {
 
 class _DeliveryHistoryScreenState extends State<DeliveryHistoryScreen> {
   final controller = AppData.deliveryController;
-
   final TextEditingController searchController = TextEditingController();
-
   List<DeliveryModel> deliveries = [];
 
   @override
@@ -84,18 +84,33 @@ class _DeliveryHistoryScreenState extends State<DeliveryHistoryScreen> {
         showDialog(
           context: context,
           builder: (_) => Dialog(
-            child: InteractiveViewer(child: Image.file(File(item.imagePath!))),
+            child: kIsWeb
+                ? Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Text('Ảnh: ${item.imagePath}'),
+                  )
+                : InteractiveViewer(child: Image.file(File(item.imagePath!))),
           ),
         );
       },
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child: Image.file(
-          File(item.imagePath!),
-          width: double.infinity,
-          height: 220,
-          fit: BoxFit.cover,
+      child: Container(
+        height: 220,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey),
+          borderRadius: BorderRadius.circular(8),
         ),
+        child: kIsWeb
+            ? Center(child: Text('Ảnh: ${item.imagePath}'))
+            : ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.file(
+                  File(item.imagePath!),
+                  width: double.infinity,
+                  height: 220,
+                  fit: BoxFit.cover,
+                ),
+              ),
       ),
     );
   }
@@ -180,37 +195,45 @@ class _DeliveryHistoryScreenState extends State<DeliveryHistoryScreen> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Flexible(
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(15),
-            child: TextField(
-              controller: searchController,
-              onChanged: (_) async {
-                await refreshList();
-              },
-              decoration: const InputDecoration(
-                hintText: "Tìm theo sản phẩm hoặc tài xế",
-                prefixIcon: Icon(Icons.search),
-                border: OutlineInputBorder(),
-              ),
+  Widget buildContent() {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(15),
+          child: TextField(
+            controller: searchController,
+            onChanged: (_) async {
+              await refreshList();
+            },
+            decoration: const InputDecoration(
+              hintText: "Tìm theo sản phẩm hoặc tài xế",
+              prefixIcon: Icon(Icons.search),
+              border: OutlineInputBorder(),
             ),
           ),
-          Expanded(
-            child: deliveries.isEmpty
-                ? const Center(child: Text("Chưa có phiếu giao hàng"))
-                : ListView.builder(
-                    itemCount: deliveries.length,
-                    itemBuilder: (context, index) {
-                      return card(deliveries[index]);
-                    },
-                  ),
-          ),
-        ],
-      ),
+        ),
+        Expanded(
+          child: deliveries.isEmpty
+              ? const Center(child: Text("Chưa có phiếu giao hàng"))
+              : ListView.builder(
+                  itemCount: deliveries.length,
+                  itemBuilder: (context, index) {
+                    return card(deliveries[index]);
+                  },
+                ),
+        ),
+      ],
     );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.showSidebar) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Lịch sử giao hàng')),
+        body: buildContent(),
+      );
+    }
+    return buildContent();
   }
 }

@@ -84,10 +84,19 @@ class _HomeScreenState extends State<HomeScreen> {
             FutureBuilder<int>(
               future: future,
               builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return const Text(
+                    '0',
+                    style: TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.red,
+                    ),
+                  );
+                }
                 if (!snapshot.hasData) {
                   return const CircularProgressIndicator();
                 }
-
                 return Text(
                   snapshot.data.toString(),
                   style: TextStyle(

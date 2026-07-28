@@ -19,9 +19,9 @@ class DashboardCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Tạo màu nền icon từ color gốc, alpha = 30 (≈12%)
-    final iconBg = color.withValues(alpha: 30 / 255);
-    final shadowColor = color.withValues(alpha: 30 / 255);
-    final borderColor = color.withValues(alpha: 30 / 255);
+    final iconBg = Color.fromARGB(30, color.red, color.green, color.blue);
+    final shadowColor = Color.fromARGB(30, color.red, color.green, color.blue);
+    final borderColor = Color.fromARGB(30, color.red, color.green, color.blue);
 
     return Container(
       width: 200,

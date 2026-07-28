@@ -197,49 +197,52 @@ class _MenuItem extends StatelessWidget {
     const selIcon = Color(0x40F57C00); // primary 25%
     const unselIcon = Color(0x0FFFFFFF); // white 6%
 
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 2),
-      decoration: BoxDecoration(
-        color: selected ? selBg : Colors.transparent,
-        borderRadius: BorderRadius.circular(10),
-        border: selected ? Border.all(color: selBorder) : null,
-      ),
-      child: ListTile(
-        dense: true,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-        leading: Container(
-          width: 34,
-          height: 34,
-          decoration: BoxDecoration(
-            color: selected ? selIcon : unselIcon,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(
-            menu.icon,
-            size: 18,
-            color: selected ? AppColors.primary : const Color(0x99FFFFFF),
-          ),
+    return Material(
+      color: Colors.transparent,
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 2),
+        decoration: BoxDecoration(
+          color: selected ? selBg : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+          border: selected ? Border.all(color: selBorder) : null,
         ),
-        title: Text(
-          menu.label,
-          style: TextStyle(
-            color: selected ? Colors.white : const Color(0xB3FFFFFF),
-            fontWeight: selected ? FontWeight.w700 : FontWeight.normal,
-            fontSize: 13.5,
+        child: ListTile(
+          dense: true,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+          leading: Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: selected ? selIcon : unselIcon,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              menu.icon,
+              size: 18,
+              color: selected ? AppColors.primary : const Color(0x99FFFFFF),
+            ),
           ),
+          title: Text(
+            menu.label,
+            style: TextStyle(
+              color: selected ? Colors.white : const Color(0xB3FFFFFF),
+              fontWeight: selected ? FontWeight.w700 : FontWeight.normal,
+              fontSize: 13.5,
+            ),
+          ),
+          trailing: selected
+              ? Container(
+                  width: 4,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                )
+              : null,
+          onTap: onTap,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
-        trailing: selected
-            ? Container(
-                width: 4,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              )
-            : null,
-        onTap: onTap,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
   }

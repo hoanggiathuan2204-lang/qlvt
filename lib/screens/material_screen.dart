@@ -114,10 +114,10 @@ class _MaterialScreenState extends State<MaterialScreen> {
     if (result != null) {
       await controller.importMaterial(
         material,
-        (result['soLuong'] as num?)?.toInt() ?? 0,
-        donGia: (result['donGia'] as num?)?.toDouble() ?? 0.0,
-        nguoiNhap: result['nguoiNhap']?.toString() ?? '',
-        ghiChu: result['ghiChu']?.toString() ?? '',
+        result['soLuong'] as int,
+        donGia: result['donGia'] as double,
+        nguoiNhap: result['nguoiNhap'] as String,
+        ghiChu: result['ghiChu'] as String,
       );
       await refreshList();
       _showSnack(
@@ -135,10 +135,10 @@ class _MaterialScreenState extends State<MaterialScreen> {
     if (result != null) {
       final ok = await controller.exportMaterial(
         material,
-        (result['soLuong'] as num?)?.toInt() ?? 0,
-        nguoiXuat: result['nguoiXuat']?.toString() ?? '',
-        lyDo: result['lyDo']?.toString() ?? '',
-        ghiChu: result['ghiChu']?.toString() ?? '',
+        result['soLuong'] as int,
+        nguoiXuat: result['nguoiXuat'] as String,
+        lyDo: result['lyDo'] as String,
+        ghiChu: result['ghiChu'] as String,
       );
       if (ok) {
         await refreshList();

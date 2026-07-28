@@ -90,15 +90,15 @@ class _ReportScreenState extends State<ReportScreen>
 
       if (!mounted) return;
       setState(() {
-        totalMaterial = (results[0] as num?)?.toInt() ?? 0;
-        totalInventory = (results[1] as num?)?.toInt() ?? 0;
-        warningCount = (results[2] as num?)?.toInt() ?? 0;
-        totalProduct = (results[3] as num?)?.toInt() ?? 0;
-        totalDelivery = (results[4] as num?)?.toInt() ?? 0;
-        totalSupplier = (results[5] as num?)?.toInt() ?? 0;
-        imports = (results[6] as List?)?.cast<ImportModel>() ?? [];
-        exports = (results[7] as List?)?.cast<ExportModel>() ?? [];
-        warningMaterials = (results[8] as List?)?.cast<MaterialModel>() ?? [];
+        totalMaterial = results[0] as int;
+        totalInventory = results[1] as int;
+        warningCount = results[2] as int;
+        totalProduct = results[3] as int;
+        totalDelivery = results[4] as int;
+        totalSupplier = results[5] as int;
+        imports = results[6] as List<ImportModel>;
+        exports = results[7] as List<ExportModel>;
+        warningMaterials = results[8] as List<MaterialModel>;
         loading = false;
       });
     } catch (e) {
@@ -220,7 +220,7 @@ class _ReportScreenState extends State<ReportScreen>
   }
 
   Widget _kpi(String label, String value, IconData icon, Color color) {
-    final bg = color.withValues(alpha: 30 / 255);
+    final bg = Color.fromARGB(30, color.red, color.green, color.blue);
     return Container(
       width: 170,
       padding: const EdgeInsets.all(14),

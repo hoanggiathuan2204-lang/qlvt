@@ -1,8 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 
 import '../firebase_options.dart';
+import '../services/web_window.dart';
 
 class FirebaseService {
   static bool _initialized = false;
@@ -56,6 +58,33 @@ class FirebaseService {
     if (!_configured) return null;
     final credential = await auth.signInAnonymously();
     return credential.user;
+  }
+
+  static Future<void> sendSignInLinkToEmail(String email) async {
+    if (!_configured) {
+      throw Exception('Firebase chưa được cấu hình.');
+    }
+    final continueUrl = kIsWeb ? '${WebWindow.origin}/qlvt/' : null;
+    final actionCodeSettings = ActionCodeSettings(
+      url: continueUrl ?? 'https://qlvt-4d1fc.firebaseapp.com',
+      handleCodeInApp: true,
+    );
+    await auth.sendSignInLinkToEmail(
+      email: email,
+      actionCodeSettings: actionCodeSettings,
+    );
+  }
+
+  static Future<User?> signInWithEmailLink(String email, String link) async {
+    if (!_configured) {
+      throw Exception('Firebase chưa được cấu hình.');
+    }
+    final credential = await auth.signInWithEmailLink(email: email, emailLink: link);
+    return credential.user;
+  }
+
+  static bool isSignInWithEmailLink(String link) {
+    return auth.isSignInWithEmailLink(link);
   }
 
   static Future<void> signOut() async {

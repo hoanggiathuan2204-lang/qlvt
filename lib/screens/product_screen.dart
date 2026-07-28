@@ -10,7 +10,8 @@ import '../widgets/product_dialog.dart';
 import '../widgets/delivery_dialog.dart';
 
 class ProductScreen extends StatefulWidget {
-  const ProductScreen({super.key});
+  final bool showSidebar;
+  const ProductScreen({super.key, this.showSidebar = true});
 
   @override
   State<ProductScreen> createState() => _ProductScreenState();
@@ -256,129 +257,163 @@ class _ProductScreenState extends State<ProductScreen> {
     ).showSnackBar(const SnackBar(content: Text("Xuất thành phẩm thành công")));
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Flexible(
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(15),
-            child: TextField(
-              controller: searchController,
-              onChanged: (_) => refreshList(),
-              decoration: InputDecoration(
-                hintText: "Tìm kiếm thành phẩm",
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+  Widget buildContent() {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(15),
+          child: TextField(
+            controller: searchController,
+            onChanged: (_) => refreshList(),
+            decoration: InputDecoration(
+              hintText: "Tìm kiếm thành phẩm",
+              prefixIcon: const Icon(Icons.search),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
               ),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 15),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Card(
-                    color: Colors.blue.shade50,
-                    child: Padding(
-                      padding: const EdgeInsets.all(15),
-                      child: Column(
-                        children: [
-                          const Text(
-                            "Tổng sản phẩm",
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(height: 8),
-                          FutureBuilder<int>(
-                            future: controller.totalProduct(),
-                            builder: (context, snapshot) {
-                              return Text(
-                                "${snapshot.data ?? 0}",
-                                style: const TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              );
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Card(
-                    color: Colors.green.shade50,
-                    child: Padding(
-                      padding: const EdgeInsets.all(15),
-                      child: Column(
-                        children: [
-                          const Text(
-                            "Tổng số kiện",
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(height: 8),
-                          FutureBuilder<int>(
-                            future: controller.totalPackage(),
-                            builder: (context, snapshot) {
-                              return Text(
-                                "${snapshot.data ?? 0}",
-                                style: const TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.green,
-                                ),
-                              );
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 10),
-          Expanded(
-            child: products.isEmpty
-                ? const Center(
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 15),
+          child: Row(
+            children: [
+              Expanded(
+                child: Card(
+                  color: Colors.blue.shade50,
+                  child: Padding(
+                    padding: const EdgeInsets.all(15),
                     child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
-                          Icons.inventory_2_outlined,
-                          size: 80,
-                          color: Colors.grey,
+                        const Text(
+                          "Tổng sản phẩm",
+                          style: TextStyle(fontWeight: FontWeight.bold),
                         ),
-                        SizedBox(height: 15),
-                        Text(
-                          "Chưa có thành phẩm",
-                          style: TextStyle(fontSize: 18, color: Colors.grey),
-                        ),
+                        const SizedBox(height: 8),
+                         FutureBuilder<int>(
+                           future: controller.totalProduct(),
+                           builder: (context, snapshot) {
+                             if (snapshot.hasError) {
+                               return const Text(
+                                 '0',
+                                 style: TextStyle(
+                                   fontSize: 24,
+                                   fontWeight: FontWeight.bold,
+                                   color: Colors.red,
+                                 ),
+                               );
+                             }
+                             if (!snapshot.hasData) {
+                               return const CircularProgressIndicator();
+                             }
+                             return Text(
+                               "${snapshot.data ?? 0}",
+                               style: const TextStyle(
+                                 fontSize: 24,
+                                 fontWeight: FontWeight.bold,
+                               ),
+                             );
+                           },
+                         ),
                       ],
                     ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.only(bottom: 100),
-                    itemCount: products.length,
-                    itemBuilder: (context, index) {
-                      final item = products[index];
-                      return ProductCard(
-                        product: item,
-                        onEdit: () => editProduct(item),
-                        onDelete: () => deleteProduct(item),
-                        onImport: () => importProduct(item),
-                        onExport: () => exportProduct(item),
-                      );
-                    },
                   ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Card(
+                  color: Colors.green.shade50,
+                  child: Padding(
+                    padding: const EdgeInsets.all(15),
+                    child: Column(
+                      children: [
+                        const Text(
+                          "Tổng số kiện",
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 8),
+                         FutureBuilder<int>(
+                           future: controller.totalPackage(),
+                           builder: (context, snapshot) {
+                             if (snapshot.hasError) {
+                               return const Text(
+                                 '0',
+                                 style: TextStyle(
+                                   fontSize: 24,
+                                   fontWeight: FontWeight.bold,
+                                   color: Colors.red,
+                                 ),
+                               );
+                             }
+                             if (!snapshot.hasData) {
+                               return const CircularProgressIndicator();
+                             }
+                             return Text(
+                               "${snapshot.data ?? 0}",
+                               style: const TextStyle(
+                                 fontSize: 24,
+                                 fontWeight: FontWeight.bold,
+                                 color: Colors.green,
+                               ),
+                             );
+                           },
+                         ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 10),
+        Expanded(
+          child: products.isEmpty
+              ? const Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.inventory_2_outlined,
+                        size: 80,
+                        color: Colors.grey,
+                      ),
+                      SizedBox(height: 15),
+                      Text(
+                        "Chưa có thành phẩm",
+                        style: TextStyle(fontSize: 18, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.only(bottom: 100),
+                  itemCount: products.length,
+                  itemBuilder: (context, index) {
+                    final item = products[index];
+                    return ProductCard(
+                      product: item,
+                      onEdit: () => editProduct(item),
+                      onDelete: () => deleteProduct(item),
+                      onImport: () => importProduct(item),
+                      onExport: () => exportProduct(item),
+                    );
+                  },
+                ),
+        ),
+      ],
     );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.showSidebar) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Quản lý thành phẩm')),
+        body: buildContent(),
+      );
+    }
+    return buildContent();
   }
 }

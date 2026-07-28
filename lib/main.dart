@@ -57,8 +57,17 @@ class _LoginPageState extends State<LoginPage> {
   @override
   void initState() {
     super.initState();
-    _checkEmailLink();
-    _tryAutoLogin();
+    _safeInit(() async {
+      await _checkEmailLink();
+    });
+  }
+
+  Future<void> _safeInit(Future<void> Function() body) async {
+    try {
+      await body();
+    } catch (e) {
+      // Không làm sập app nếu có lỗi khởi tạo
+    }
   }
 
   Future<void> _checkEmailLink() async {
@@ -108,9 +117,13 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _navigateToApp() {
-    Navigator.of(
-      context,
-    ).pushReplacement(MaterialPageRoute(builder: (_) => const AppShell()));
+    try {
+      Navigator.of(
+        context,
+      ).pushReplacement(MaterialPageRoute(builder: (_) => const AppShell()));
+    } catch (e) {
+      // ignore
+    }
   }
 
   @override

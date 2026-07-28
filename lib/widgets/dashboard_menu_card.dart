@@ -28,7 +28,7 @@ class DashboardMenuCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(.15),
+              color: Colors.grey.withValues(alpha: .15),
               blurRadius: 12,
               offset: const Offset(0, 5),
             ),
@@ -41,7 +41,7 @@ class DashboardMenuCard extends StatelessWidget {
               width: 52,
               height: 52,
               decoration: BoxDecoration(
-                color: color.withOpacity(.12),
+                color: color.withValues(alpha: .12),
                 borderRadius: BorderRadius.circular(15),
               ),
               child: Icon(icon, color: color, size: 28),

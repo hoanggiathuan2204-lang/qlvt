@@ -1,10 +1,9 @@
-import 'dart:io';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../data/app_data.dart';
 import '../models/delivery_model.dart';
+import '../utils/image_utils.dart' as img_utils;
 import '../widgets/delivery_dialog.dart';
 
 class DeliveryHistoryScreen extends StatefulWidget {
@@ -36,7 +35,10 @@ class _DeliveryHistoryScreenState extends State<DeliveryHistoryScreen> {
       if (mounted) {
         setState(() => deliveries = []);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi tải lịch sử giao hàng: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Lỗi tải lịch sử giao hàng: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
@@ -89,7 +91,7 @@ class _DeliveryHistoryScreenState extends State<DeliveryHistoryScreen> {
                     padding: const EdgeInsets.all(16),
                     child: Text('Ảnh: ${item.imagePath}'),
                   )
-                : InteractiveViewer(child: Image.file(File(item.imagePath!))),
+                : img_utils.buildInteractiveImage(item.imagePath!),
           ),
         );
       },
@@ -104,8 +106,8 @@ class _DeliveryHistoryScreenState extends State<DeliveryHistoryScreen> {
             ? Center(child: Text('Ảnh: ${item.imagePath}'))
             : ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: Image.file(
-                  File(item.imagePath!),
+                child: img_utils.buildImageWidget(
+                  item.imagePath!,
                   width: double.infinity,
                   height: 220,
                   fit: BoxFit.cover,

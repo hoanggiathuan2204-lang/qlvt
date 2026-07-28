@@ -72,7 +72,7 @@ class _LoginPageState extends State<LoginPage> {
 
   Future<void> _checkEmailLink() async {
     if (!kIsWeb) return;
-    final href = WebWindow.currentUrl;
+    final href = WebWindow.currentUrl as String;
     if (href.isEmpty) return;
     if (!FirebaseService.isSignInWithEmailLink(href)) return;
 
@@ -156,9 +156,9 @@ class _LoginPageState extends State<LoginPage> {
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gửi link thất bại: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Gửi link thất bại: $e')));
     }
   }
 
@@ -169,7 +169,9 @@ class _LoginPageState extends State<LoginPage> {
     if (username.isEmpty || password.isEmpty) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vui lòng nhập tên đăng nhập và mật khẩu.')),
+        const SnackBar(
+          content: Text('Vui lòng nhập tên đăng nhập và mật khẩu.'),
+        ),
       );
       return;
     }

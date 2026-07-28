@@ -24,7 +24,8 @@ class FirestoreDataService {
   static String? _currentUserId() => FirebaseAuth.instance.currentUser?.uid;
 
   static Query<Map<String, dynamic>> _withUserFilter(
-      Query<Map<String, dynamic>> query) {
+    Query<Map<String, dynamic>> query,
+  ) {
     final uid = _currentUserId();
     if (uid == null) return query;
     return query.where('userId', isEqualTo: uid);
@@ -34,7 +35,9 @@ class FirestoreDataService {
     try {
       final uid = _currentUserId();
       print('[FS] getMaterials uid=$uid');
-      final query = uid == null ? materialsRef : materialsRef.where('userId', isEqualTo: uid);
+      final query = uid == null
+          ? materialsRef
+          : materialsRef.where('userId', isEqualTo: uid);
       final snapshot = await query.get();
       print('[FS] getMaterials snapshot.size=${snapshot.size}');
       final list = <MaterialModel>[];
@@ -49,7 +52,9 @@ class FirestoreDataService {
           continue;
         }
       }
-      list.sort((a, b) => a.tenVatTu.toLowerCase().compareTo(b.tenVatTu.toLowerCase()));
+      list.sort(
+        (a, b) => a.tenVatTu.toLowerCase().compareTo(b.tenVatTu.toLowerCase()),
+      );
       print('[FS] getMaterials result=${list.length}');
       return list;
     } catch (e) {
@@ -87,7 +92,9 @@ class FirestoreDataService {
     try {
       final uid = _currentUserId();
       print('[FS] getProducts uid=$uid');
-      final query = uid == null ? productsRef : productsRef.where('userId', isEqualTo: uid);
+      final query = uid == null
+          ? productsRef
+          : productsRef.where('userId', isEqualTo: uid);
       final snapshot = await query.get();
       print('[FS] getProducts snapshot.size=${snapshot.size}');
       final list = <ProductModel>[];
@@ -102,7 +109,10 @@ class FirestoreDataService {
           continue;
         }
       }
-      list.sort((a, b) => a.tenSanPham.toLowerCase().compareTo(b.tenSanPham.toLowerCase()));
+      list.sort(
+        (a, b) =>
+            a.tenSanPham.toLowerCase().compareTo(b.tenSanPham.toLowerCase()),
+      );
       print('[FS] getProducts result=${list.length}');
       return list;
     } catch (e) {
@@ -139,7 +149,9 @@ class FirestoreDataService {
     try {
       final uid = _currentUserId();
       print('[FS] getSuppliers uid=$uid');
-      final query = uid == null ? suppliersRef : suppliersRef.where('userId', isEqualTo: uid);
+      final query = uid == null
+          ? suppliersRef
+          : suppliersRef.where('userId', isEqualTo: uid);
       final snapshot = await query.get();
       print('[FS] getSuppliers snapshot.size=${snapshot.size}');
       final list = <SupplierModel>[];
@@ -154,7 +166,9 @@ class FirestoreDataService {
           continue;
         }
       }
-      list.sort((a, b) => a.tenNCC.toLowerCase().compareTo(b.tenNCC.toLowerCase()));
+      list.sort(
+        (a, b) => a.tenNCC.toLowerCase().compareTo(b.tenNCC.toLowerCase()),
+      );
       print('[FS] getSuppliers result=${list.length}');
       return list;
     } catch (e) {
@@ -192,7 +206,9 @@ class FirestoreDataService {
     try {
       final uid = _currentUserId();
       print('[FS] getDeliveries uid=$uid');
-      final query = uid == null ? deliveriesRef : deliveriesRef.where('userId', isEqualTo: uid);
+      final query = uid == null
+          ? deliveriesRef
+          : deliveriesRef.where('userId', isEqualTo: uid);
       final snapshot = await query.get();
       print('[FS] getDeliveries snapshot.size=${snapshot.size}');
       final list = <DeliveryModel>[];
@@ -275,7 +291,9 @@ class FirestoreDataService {
       if (value is Map) {
         result[k] = _toPlainMap(value);
       } else if (value is List) {
-        result[k] = value.map((e) => _toPlainMap(e is Map ? e : <dynamic, dynamic>{})).toList();
+        result[k] = value
+            .map((e) => _toPlainMap(e is Map ? e : <dynamic, dynamic>{}))
+            .toList();
       } else {
         result[k] = value.toString();
       }
@@ -285,7 +303,8 @@ class FirestoreDataService {
 
   static int _safeInt(dynamic value) {
     if (value is num) return value.toInt();
-    if (value is String) return int.tryParse(value) ?? DateTime.now().millisecondsSinceEpoch;
+    if (value is String)
+      return int.tryParse(value) ?? DateTime.now().millisecondsSinceEpoch;
     return DateTime.now().millisecondsSinceEpoch;
   }
 }

@@ -1,10 +1,6 @@
-import 'dart:io';
-
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 
 import '../models/delivery_model.dart';
 
@@ -70,25 +66,24 @@ class _DeliveryDialogState extends State<DeliveryDialog> {
     if (result == null) return;
 
     if (kIsWeb) {
+      // Trên web, chỉ lưu tên file
       setState(() {
         imagePath = result.files.single.name;
       });
       return;
     }
 
-    final source = File(result.files.single.path!);
-    final appFolder = await getApplicationDocumentsDirectory();
-    final imageFolder = Directory(p.join(appFolder.path, "delivery_images"));
-    if (!await imageFolder.exists()) {
-      await imageFolder.create(recursive: true);
+    // Trên native, copy file vào thư mục documents
+    try {
+      // Sử dụng file_picker path có sẵn
+      final filePath = result.files.single.path;
+      if (filePath == null) return;
+      setState(() {
+        imagePath = filePath;
+      });
+    } catch (e) {
+      // ignore
     }
-    final fileName =
-        "${DateTime.now().millisecondsSinceEpoch}_${p.basename(source.path)}";
-    final target = File(p.join(imageFolder.path, fileName));
-    await source.copy(target.path);
-    setState(() {
-      imagePath = target.path;
-    });
   }
 
   @override
@@ -191,15 +186,7 @@ class _DeliveryDialogState extends State<DeliveryDialog> {
                   ),
                   child: imagePath == null
                       ? const Center(child: Text("Chưa có ảnh"))
-                      : kIsWeb
-                          ? Center(child: Text('Ảnh: $imagePath'))
-                          : ClipRRect(
-                              borderRadius: BorderRadius.circular(10),
-                              child: Image.file(
-                                File(imagePath!),
-                                fit: BoxFit.cover,
-                              ),
-                            ),
+                      : Center(child: Text('Ảnh: $imagePath')),
                 ),
               ],
             ),

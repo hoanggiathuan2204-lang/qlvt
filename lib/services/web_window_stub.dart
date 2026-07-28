@@ -1,4 +1,4 @@
 class WebWindow {
-  static String get currentUrl => '';
-  static String get origin => '';
+  static dynamic get currentUrl => '';
+  static dynamic get origin => '';
 }

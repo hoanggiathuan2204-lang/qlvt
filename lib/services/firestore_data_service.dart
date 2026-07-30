@@ -44,6 +44,7 @@ class FirestoreDataService {
       for (final doc in snapshot.docs) {
         try {
           final raw = doc.data();
+          if (raw is! Map) continue;
           final data = _toPlainMap(raw);
           data['id'] = _safeInt(doc.id);
           list.add(MaterialModel.fromMap(data));
@@ -101,6 +102,7 @@ class FirestoreDataService {
       for (final doc in snapshot.docs) {
         try {
           final raw = doc.data();
+          if (raw is! Map) continue;
           final data = _toPlainMap(raw);
           data['id'] = _safeInt(doc.id);
           list.add(ProductModel.fromMap(data));
@@ -158,6 +160,7 @@ class FirestoreDataService {
       for (final doc in snapshot.docs) {
         try {
           final raw = doc.data();
+          if (raw is! Map) continue;
           final data = _toPlainMap(raw);
           data['id'] = _safeInt(doc.id);
           list.add(SupplierModel.fromMap(data));
@@ -215,6 +218,7 @@ class FirestoreDataService {
       for (final doc in snapshot.docs) {
         try {
           final raw = doc.data();
+          if (raw is! Map) continue;
           final data = _toPlainMap(raw);
           data['id'] = _safeInt(doc.id);
           list.add(DeliveryModel.fromMap(data));
@@ -263,8 +267,8 @@ class FirestoreDataService {
     }
   }
 
-  static Map<String, dynamic> _toPlainMap(Map<dynamic, dynamic>? raw) {
-    if (raw == null) return <String, dynamic>{};
+  static Map<String, dynamic> _toPlainMap(dynamic raw) {
+    if (raw is! Map) return <String, dynamic>{};
     final Map<String, dynamic> result = <String, dynamic>{};
     for (final entry in raw.entries) {
       final String k = entry.key.toString();
@@ -281,6 +285,10 @@ class FirestoreDataService {
         result[k] = value.toDate().toIso8601String();
         continue;
       }
+      if (value is DateTime) {
+        result[k] = value.toIso8601String();
+        continue;
+      }
       try {
         final dt = (value as dynamic).toDate();
         if (dt is DateTime) {
@@ -291,9 +299,14 @@ class FirestoreDataService {
       if (value is Map) {
         result[k] = _toPlainMap(value);
       } else if (value is List) {
-        result[k] = value
-            .map((e) => _toPlainMap(e is Map ? e : <dynamic, dynamic>{}))
-            .toList();
+        result[k] = value.map((e) {
+          if (e == null) return null;
+          if (e is String || e is int || e is double || e is bool) return e;
+          if (e is Timestamp) return e.toDate().toIso8601String();
+          if (e is DateTime) return e.toIso8601String();
+          if (e is Map) return _toPlainMap(e);
+          return e.toString();
+        }).toList();
       } else {
         result[k] = value.toString();
       }

@@ -1,14 +1,24 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../data/app_data.dart';
 import '../models/delivery_model.dart';
+import '../services/firestore_data_service.dart';
+import '../theme/app_colors.dart';
+import '../widgets/dashboard_header.dart';
 import '../utils/image_utils.dart' as img_utils;
 import '../widgets/delivery_dialog.dart';
 
 class DeliveryHistoryScreen extends StatefulWidget {
   final bool showSidebar;
-  const DeliveryHistoryScreen({super.key, this.showSidebar = true});
+  final VoidCallback? onMenuTap;
+  const DeliveryHistoryScreen({
+    super.key,
+    this.showSidebar = true,
+    this.onMenuTap,
+  });
 
   @override
   State<DeliveryHistoryScreen> createState() => _DeliveryHistoryScreenState();
@@ -17,31 +27,62 @@ class DeliveryHistoryScreen extends StatefulWidget {
 class _DeliveryHistoryScreenState extends State<DeliveryHistoryScreen> {
   final controller = AppData.deliveryController;
   final TextEditingController searchController = TextEditingController();
+  final Stream<List<DeliveryModel>> _deliveryStream =
+      FirestoreDataService.streamDeliveries();
+  StreamSubscription<List<DeliveryModel>>? _deliverySub;
+  List<DeliveryModel> _allDeliveries = [];
   List<DeliveryModel> deliveries = [];
+  String _searchQuery = '';
 
   @override
   void initState() {
     super.initState();
-    refreshList();
-  }
-
-  Future<void> refreshList() async {
-    try {
-      deliveries = await controller.search(searchController.text);
-      if (mounted) {
-        setState(() {});
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() => deliveries = []);
+    _deliverySub = _deliveryStream.listen(
+      (list) {
+        if (!mounted) return;
+        setState(() {
+          _allDeliveries = list;
+          deliveries = _filterDeliveries(_allDeliveries, _searchQuery);
+        });
+      },
+      onError: (e) {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Lỗi tải lịch sử giao hàng: $e'),
             backgroundColor: Colors.red,
           ),
         );
-      }
-    }
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _deliverySub?.cancel();
+    searchController.dispose();
+    super.dispose();
+  }
+
+  List<DeliveryModel> _filterDeliveries(
+    List<DeliveryModel> list,
+    String query,
+  ) {
+    if (query.trim().isEmpty) return list;
+    final key = query.toLowerCase();
+    return list.where((item) {
+      return item.tenSanPham.toLowerCase().contains(key) ||
+          item.taiXe.toLowerCase().contains(key) ||
+          item.bienSoXe.toLowerCase().contains(key) ||
+          item.diaChiGiao.toLowerCase().contains(key);
+    }).toList();
+  }
+
+  void _onSearchChanged(String query) {
+    _searchQuery = query;
+    setState(() {
+      deliveries = _filterDeliveries(_allDeliveries, _searchQuery);
+    });
   }
 
   Future<void> addDelivery() async {
@@ -54,13 +95,20 @@ class _DeliveryHistoryScreenState extends State<DeliveryHistoryScreen> {
 
     await controller.addDelivery(result);
 
-    await refreshList();
+    await _refreshList();
   }
 
   Future<void> deleteDelivery(DeliveryModel delivery) async {
     await controller.deleteDelivery(delivery);
 
-    await refreshList();
+    await _refreshList();
+  }
+
+  Future<void> _refreshList() async {
+    if (!mounted) return;
+    setState(() {
+      deliveries = _filterDeliveries(_allDeliveries, _searchQuery);
+    });
   }
 
   Widget info(IconData icon, String title, String value) {
@@ -204,9 +252,7 @@ class _DeliveryHistoryScreenState extends State<DeliveryHistoryScreen> {
           padding: const EdgeInsets.all(15),
           child: TextField(
             controller: searchController,
-            onChanged: (_) async {
-              await refreshList();
-            },
+            onChanged: _onSearchChanged,
             decoration: const InputDecoration(
               hintText: "Tìm theo sản phẩm hoặc tài xế",
               prefixIcon: Icon(Icons.search),
@@ -236,6 +282,18 @@ class _DeliveryHistoryScreenState extends State<DeliveryHistoryScreen> {
         body: buildContent(),
       );
     }
-    return buildContent();
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: Column(
+        children: [
+          DashboardHeader(
+            title: 'Lịch sử giao hàng',
+            userName: 'Administrator',
+            onMenuTap: widget.onMenuTap,
+          ),
+          Expanded(child: buildContent()),
+        ],
+      ),
+    );
   }
 }

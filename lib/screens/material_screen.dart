@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../data/app_data.dart';
 import '../models/material_model.dart';
+import '../services/firestore_data_service.dart';
 import '../theme/app_colors.dart';
 import '../widgets/dashboard_header.dart';
 import '../widgets/dashboard_sidebar.dart';
@@ -12,7 +15,8 @@ import '../widgets/material_dialog.dart';
 
 class MaterialScreen extends StatefulWidget {
   final bool showSidebar;
-  const MaterialScreen({super.key, this.showSidebar = true});
+  final VoidCallback? onMenuTap;
+  const MaterialScreen({super.key, this.showSidebar = true, this.onMenuTap});
 
   @override
   State<MaterialScreen> createState() => _MaterialScreenState();
@@ -21,32 +25,65 @@ class MaterialScreen extends StatefulWidget {
 class _MaterialScreenState extends State<MaterialScreen> {
   final controller = AppData.materialController;
   final TextEditingController searchController = TextEditingController();
+  final Stream<List<MaterialModel>> _materialsStream =
+      FirestoreDataService.streamMaterials();
+  StreamSubscription<List<MaterialModel>>? _materialsSub;
+  List<MaterialModel> _allMaterials = [];
   List<MaterialModel> materials = [];
+  String _searchQuery = '';
   int selectedMenu = 1;
 
   @override
   void initState() {
     super.initState();
-    refreshList();
+    _materialsSub = _materialsStream.listen(
+      (list) {
+        if (!mounted) return;
+        setState(() {
+          _allMaterials = list;
+          materials = _filterMaterials(_allMaterials, _searchQuery);
+        });
+      },
+      onError: (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Lỗi tải vật tư: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      },
+    );
   }
 
   @override
   void dispose() {
+    _materialsSub?.cancel();
     searchController.dispose();
     super.dispose();
   }
 
+  List<MaterialModel> _filterMaterials(List<MaterialModel> list, String query) {
+    if (query.trim().isEmpty) return list;
+    final key = query.toLowerCase();
+    return list.where((item) {
+      return item.maVatTu.toLowerCase().contains(key) ||
+          item.tenVatTu.toLowerCase().contains(key) ||
+          item.nhomVatTu.toLowerCase().contains(key) ||
+          item.nhaCungCap.toLowerCase().contains(key);
+    }).toList();
+  }
+
+  void _onSearchChanged(String query) {
+    _searchQuery = query;
+    setState(() {
+      materials = _filterMaterials(_allMaterials, _searchQuery);
+    });
+  }
+
   Future<void> refreshList() async {
-    try {
-      final result = await controller.search(searchController.text);
-      if (!mounted) return;
-      setState(() => materials = result);
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Lỗi tải vật tư: $e'), backgroundColor: Colors.red),
-      );
-    }
+    if (!mounted) return;
+    setState(() {});
   }
 
   Future<void> addMaterial() async {
@@ -62,7 +99,10 @@ class _MaterialScreenState extends State<MaterialScreen> {
       } catch (e) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi thêm vật tư: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Lỗi thêm vật tư: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
@@ -164,12 +204,19 @@ class _MaterialScreenState extends State<MaterialScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600;
+
     final Widget content = Column(
       children: [
-        DashboardHeader(title: 'Quản lý vật tư', userName: 'Administrator'),
+        DashboardHeader(
+          title: 'Quản lý vật tư',
+          userName: 'Administrator',
+          onMenuTap: widget.onMenuTap,
+        ),
         Expanded(
           child: Padding(
-            padding: const EdgeInsets.all(20),
+            padding: EdgeInsets.all(isMobile ? 12 : 20),
             child: Column(
               children: [
                 //------------------------------------
@@ -180,47 +227,89 @@ class _MaterialScreenState extends State<MaterialScreen> {
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isMobile ? 8 : 16,
+                      vertical: isMobile ? 8 : 12,
                     ),
-                    child: Row(
-                      children: [
-                        // Tìm kiếm
-                        Expanded(
-                          child: TextField(
-                            controller: searchController,
-                            onChanged: (_) => refreshList(),
-                            decoration: InputDecoration(
-                              hintText: 'Tìm theo mã, tên, nhóm, NCC...',
-                              prefixIcon: const Icon(Icons.search),
-                              filled: true,
-                              fillColor: AppColors.background,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide.none,
+                    child: isMobile
+                        ? Column(
+                            children: [
+                              // Tìm kiếm - full width on mobile
+                              TextField(
+                                controller: searchController,
+                                onChanged: _onSearchChanged,
+                                decoration: InputDecoration(
+                                  hintText: 'Tìm kiếm...',
+                                  prefixIcon: const Icon(Icons.search),
+                                  filled: true,
+                                  fillColor: AppColors.background,
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 10,
+                                  ),
+                                ),
                               ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 10,
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: ElevatedButton.icon(
+                                      onPressed: addMaterial,
+                                      icon: const Icon(Icons.add, size: 18),
+                                      label: const Text('Thêm'),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  OutlinedButton.icon(
+                                    onPressed: refreshList,
+                                    icon: const Icon(Icons.refresh, size: 18),
+                                    label: const Text('Làm mới'),
+                                  ),
+                                ],
                               ),
-                            ),
+                            ],
+                          )
+                        : Row(
+                            children: [
+                              // Tìm kiếm
+                              Expanded(
+                                child: TextField(
+                                  controller: searchController,
+                                  onChanged: _onSearchChanged,
+                                  decoration: InputDecoration(
+                                    hintText: 'Tìm theo mã, tên, nhóm, NCC...',
+                                    prefixIcon: const Icon(Icons.search),
+                                    filled: true,
+                                    fillColor: AppColors.background,
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide.none,
+                                    ),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 10,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              ElevatedButton.icon(
+                                onPressed: addMaterial,
+                                icon: const Icon(Icons.add),
+                                label: const Text('Thêm vật tư'),
+                              ),
+                              const SizedBox(width: 8),
+                              OutlinedButton.icon(
+                                onPressed: refreshList,
+                                icon: const Icon(Icons.refresh),
+                                label: const Text('Làm mới'),
+                              ),
+                            ],
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        ElevatedButton.icon(
-                          onPressed: addMaterial,
-                          icon: const Icon(Icons.add),
-                          label: const Text('Thêm vật tư'),
-                        ),
-                        const SizedBox(width: 8),
-                        OutlinedButton.icon(
-                          onPressed: refreshList,
-                          icon: const Icon(Icons.refresh),
-                          label: const Text('Làm mới'),
-                        ),
-                      ],
-                    ),
                   ),
                 ),
                 const SizedBox(height: 10),

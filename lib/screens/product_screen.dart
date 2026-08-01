@@ -1,9 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../data/app_data.dart';
-
 import '../models/product_model.dart';
 import '../models/delivery_model.dart';
+import '../services/firestore_data_service.dart';
+import '../theme/app_colors.dart';
+import '../widgets/dashboard_header.dart';
 
 import '../widgets/product_card.dart';
 import '../widgets/product_dialog.dart';
@@ -11,7 +15,8 @@ import '../widgets/delivery_dialog.dart';
 
 class ProductScreen extends StatefulWidget {
   final bool showSidebar;
-  const ProductScreen({super.key, this.showSidebar = true});
+  final VoidCallback? onMenuTap;
+  const ProductScreen({super.key, this.showSidebar = true, this.onMenuTap});
 
   @override
   State<ProductScreen> createState() => _ProductScreenState();
@@ -19,39 +24,68 @@ class ProductScreen extends StatefulWidget {
 
 class _ProductScreenState extends State<ProductScreen> {
   final controller = AppData.productController;
-
   final deliveryController = AppData.deliveryController;
-
   final TextEditingController searchController = TextEditingController();
-
+  final Stream<List<ProductModel>> _productsStream =
+      FirestoreDataService.streamProducts();
+  StreamSubscription<List<ProductModel>>? _productsSub;
+  List<ProductModel> _allProducts = [];
   List<ProductModel> products = [];
+  String _searchQuery = '';
 
   @override
   void initState() {
     super.initState();
-    refreshList();
+    _productsSub = _productsStream.listen(
+      (list) {
+        if (!mounted) return;
+        setState(() {
+          _allProducts = list;
+          products = _filterProducts(_allProducts, _searchQuery);
+        });
+      },
+      onError: (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Lỗi tải thành phẩm: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      },
+    );
   }
 
   @override
   void dispose() {
+    _productsSub?.cancel();
     searchController.dispose();
     super.dispose();
+  }
+
+  List<ProductModel> _filterProducts(List<ProductModel> list, String query) {
+    if (query.trim().isEmpty) return list;
+    final key = query.toLowerCase();
+    return list.where((p) {
+      return p.maSanPham.toLowerCase().contains(key) ||
+          p.tenSanPham.toLowerCase().contains(key) ||
+          p.diaChiLapRap.toLowerCase().contains(key);
+    }).toList();
+  }
+
+  void _onSearchChanged(String query) {
+    _searchQuery = query;
+    setState(() {
+      products = _filterProducts(_allProducts, _searchQuery);
+    });
   }
 
   //------------------------------------
   // Load danh sách
   //------------------------------------
   Future<void> refreshList() async {
-    try {
-      products = await controller.search(searchController.text);
-      if (!mounted) return;
-      setState(() {});
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Lỗi tải thành phẩm: $e'), backgroundColor: Colors.red),
-      );
-    }
+    if (!mounted) return;
+    setState(() {});
   }
 
   //------------------------------------
@@ -258,13 +292,16 @@ class _ProductScreenState extends State<ProductScreen> {
   }
 
   Widget buildContent() {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600;
+
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.all(15),
+          padding: EdgeInsets.all(isMobile ? 10 : 15),
           child: TextField(
             controller: searchController,
-            onChanged: (_) => refreshList(),
+            onChanged: _onSearchChanged,
             decoration: InputDecoration(
               hintText: "Tìm kiếm thành phẩm",
               prefixIcon: const Icon(Icons.search),
@@ -275,14 +312,14 @@ class _ProductScreenState extends State<ProductScreen> {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 15),
+          padding: EdgeInsets.symmetric(horizontal: isMobile ? 10 : 15),
           child: Row(
             children: [
               Expanded(
                 child: Card(
                   color: Colors.blue.shade50,
                   child: Padding(
-                    padding: const EdgeInsets.all(15),
+                    padding: EdgeInsets.all(isMobile ? 10 : 15),
                     child: Column(
                       children: [
                         const Text(
@@ -290,31 +327,31 @@ class _ProductScreenState extends State<ProductScreen> {
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 8),
-                         FutureBuilder<int>(
-                           future: controller.totalProduct(),
-                           builder: (context, snapshot) {
-                             if (snapshot.hasError) {
-                               return const Text(
-                                 '0',
-                                 style: TextStyle(
-                                   fontSize: 24,
-                                   fontWeight: FontWeight.bold,
-                                   color: Colors.red,
-                                 ),
-                               );
-                             }
-                             if (!snapshot.hasData) {
-                               return const CircularProgressIndicator();
-                             }
-                             return Text(
-                               "${snapshot.data ?? 0}",
-                               style: const TextStyle(
-                                 fontSize: 24,
-                                 fontWeight: FontWeight.bold,
-                               ),
-                             );
-                           },
-                         ),
+                        FutureBuilder<int>(
+                          future: controller.totalProduct(),
+                          builder: (context, snapshot) {
+                            if (snapshot.hasError) {
+                              return const Text(
+                                '0',
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.red,
+                                ),
+                              );
+                            }
+                            if (!snapshot.hasData) {
+                              return const CircularProgressIndicator();
+                            }
+                            return Text(
+                              "${snapshot.data ?? 0}",
+                              style: TextStyle(
+                                fontSize: isMobile ? 18 : 24,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            );
+                          },
+                        ),
                       ],
                     ),
                   ),
@@ -325,7 +362,7 @@ class _ProductScreenState extends State<ProductScreen> {
                 child: Card(
                   color: Colors.green.shade50,
                   child: Padding(
-                    padding: const EdgeInsets.all(15),
+                    padding: EdgeInsets.all(isMobile ? 10 : 15),
                     child: Column(
                       children: [
                         const Text(
@@ -333,32 +370,32 @@ class _ProductScreenState extends State<ProductScreen> {
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 8),
-                         FutureBuilder<int>(
-                           future: controller.totalPackage(),
-                           builder: (context, snapshot) {
-                             if (snapshot.hasError) {
-                               return const Text(
-                                 '0',
-                                 style: TextStyle(
-                                   fontSize: 24,
-                                   fontWeight: FontWeight.bold,
-                                   color: Colors.red,
-                                 ),
-                               );
-                             }
-                             if (!snapshot.hasData) {
-                               return const CircularProgressIndicator();
-                             }
-                             return Text(
-                               "${snapshot.data ?? 0}",
-                               style: const TextStyle(
-                                 fontSize: 24,
-                                 fontWeight: FontWeight.bold,
-                                 color: Colors.green,
-                               ),
-                             );
-                           },
-                         ),
+                        FutureBuilder<int>(
+                          future: controller.totalPackage(),
+                          builder: (context, snapshot) {
+                            if (snapshot.hasError) {
+                              return Text(
+                                '0',
+                                style: TextStyle(
+                                  fontSize: isMobile ? 18 : 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.red,
+                                ),
+                              );
+                            }
+                            if (!snapshot.hasData) {
+                              return const CircularProgressIndicator();
+                            }
+                            return Text(
+                              "${snapshot.data ?? 0}",
+                              style: TextStyle(
+                                fontSize: isMobile ? 18 : 24,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.green,
+                              ),
+                            );
+                          },
+                        ),
                       ],
                     ),
                   ),
@@ -414,6 +451,19 @@ class _ProductScreenState extends State<ProductScreen> {
         body: buildContent(),
       );
     }
-    return buildContent();
+
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: Column(
+        children: [
+          DashboardHeader(
+            title: 'Quản lý thành phẩm',
+            userName: 'Administrator',
+            onMenuTap: widget.onMenuTap,
+          ),
+          Expanded(child: buildContent()),
+        ],
+      ),
+    );
   }
 }

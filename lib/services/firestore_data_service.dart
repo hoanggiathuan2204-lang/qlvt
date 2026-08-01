@@ -1,13 +1,38 @@
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 import '../models/delivery_model.dart';
 import '../models/material_model.dart';
+import '../models/notification_model.dart';
 import '../models/product_model.dart';
 import '../models/supplier_model.dart';
+import 'auth_service.dart';
+
+/// A simple change notifier that broadcasts data change events.
+class DataChangeNotifier {
+  final StreamController<String> _controller =
+      StreamController<String>.broadcast();
+
+  /// Stream of change type descriptions (e.g. 'material', 'product', ...)
+  Stream<String> get changes => _controller.stream;
+
+  void notify(String type) {
+    _controller.add(type);
+  }
+
+  void dispose() {
+    _controller.close();
+  }
+
+  // Singleton
+  static final DataChangeNotifier instance = DataChangeNotifier._();
+  DataChangeNotifier._();
+}
 
 class FirestoreDataService {
   static final FirebaseFirestore _db = FirebaseFirestore.instance;
+
+  static final DataChangeNotifier notifier = DataChangeNotifier.instance;
 
   static CollectionReference<Map<String, dynamic>> get materialsRef =>
       _db.collection('materials');
@@ -21,25 +46,179 @@ class FirestoreDataService {
   static CollectionReference<Map<String, dynamic>> get deliveriesRef =>
       _db.collection('deliveries');
 
-  static String? _currentUserId() => FirebaseAuth.instance.currentUser?.uid;
+  static CollectionReference<Map<String, dynamic>> get notificationsRef =>
+      _db.collection('notifications');
 
-  static Query<Map<String, dynamic>> _withUserFilter(
-    Query<Map<String, dynamic>> query,
-  ) {
-    final uid = _currentUserId();
-    if (uid == null) return query;
-    return query.where('userId', isEqualTo: uid);
+  // ─── Notifications ────────────────────────────────────────
+
+  /// Add a notification to Firestore about a user action.
+  static Future<void> addNotification({
+    required String action,
+    required String description,
+    required String targetType,
+    required String targetId,
+    required String targetName,
+  }) async {
+    try {
+      final user = AuthService.instance.currentUser;
+      if (user == null) return;
+
+      final id = DateTime.now().millisecondsSinceEpoch.toString();
+      final notification = NotificationModel(
+        id: id,
+        action: action,
+        description: description,
+        userName: user.username,
+        displayName: user.displayName,
+        userRole: user.role,
+        timestamp: DateTime.now(),
+        targetType: targetType,
+        targetId: targetId,
+        targetName: targetName,
+      );
+      await notificationsRef.doc(id).set(notification.toMap());
+    } catch (e) {
+      print('[FS] addNotification FAILED: $e');
+    }
   }
+
+  /// Returns a realtime stream of notifications, newest first.
+  static Stream<List<NotificationModel>> streamNotifications() {
+    return notificationsRef
+        .orderBy('timestamp', descending: true)
+        .limit(50)
+        .snapshots()
+        .map((snapshot) {
+          final list = <NotificationModel>[];
+          for (final doc in snapshot.docs) {
+            try {
+              final raw = doc.data();
+              if (raw is! Map) continue;
+              final data = _toPlainMap(raw);
+              // ensure id is the document id (string)
+              data['id'] = doc.id.toString();
+              list.add(NotificationModel.fromMap(data));
+            } catch (e) {
+              print('[FS] streamNotifications skip doc=${doc.id} err=$e');
+              continue;
+            }
+          }
+          return list;
+        });
+  }
+
+  /// Get unread notification count (from last 24 hours).
+  static Future<int> getUnreadNotificationCount() async {
+    try {
+      final yesterday = DateTime.now().subtract(const Duration(hours: 24));
+      final snapshot = await notificationsRef
+          .where('timestamp', isGreaterThan: yesterday.toIso8601String())
+          .get();
+      return snapshot.docs.length;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  // ─── Snapshot streams (realtime sync) ─────────────────────
+
+  /// Returns a realtime stream of all materials, sorted by name.
+  static Stream<List<MaterialModel>> streamMaterials() {
+    return materialsRef.snapshots().map((snapshot) {
+      final list = <MaterialModel>[];
+      for (final doc in snapshot.docs) {
+        try {
+          final raw = doc.data();
+          if (raw is! Map) continue;
+          final data = _toPlainMap(raw);
+          data['id'] = _safeInt(doc.id);
+          list.add(MaterialModel.fromMap(data));
+        } catch (e) {
+          print('[FS] streamMaterials skip doc=${doc.id} err=$e');
+          continue;
+        }
+      }
+      list.sort(
+        (a, b) => a.tenVatTu.toLowerCase().compareTo(b.tenVatTu.toLowerCase()),
+      );
+      return list;
+    });
+  }
+
+  /// Returns a realtime stream of all products, sorted by name.
+  static Stream<List<ProductModel>> streamProducts() {
+    return productsRef.snapshots().map((snapshot) {
+      final list = <ProductModel>[];
+      for (final doc in snapshot.docs) {
+        try {
+          final raw = doc.data();
+          if (raw is! Map) continue;
+          final data = _toPlainMap(raw);
+          data['id'] = _safeInt(doc.id);
+          list.add(ProductModel.fromMap(data));
+        } catch (e) {
+          print('[FS] streamProducts skip doc=${doc.id} err=$e');
+          continue;
+        }
+      }
+      list.sort(
+        (a, b) =>
+            a.tenSanPham.toLowerCase().compareTo(b.tenSanPham.toLowerCase()),
+      );
+      return list;
+    });
+  }
+
+  /// Returns a realtime stream of all suppliers, sorted by name.
+  static Stream<List<SupplierModel>> streamSuppliers() {
+    return suppliersRef.snapshots().map((snapshot) {
+      final list = <SupplierModel>[];
+      for (final doc in snapshot.docs) {
+        try {
+          final raw = doc.data();
+          if (raw is! Map) continue;
+          final data = _toPlainMap(raw);
+          data['id'] = _safeInt(doc.id);
+          list.add(SupplierModel.fromMap(data));
+        } catch (e) {
+          print('[FS] streamSuppliers skip doc=${doc.id} err=$e');
+          continue;
+        }
+      }
+      list.sort(
+        (a, b) => a.tenNCC.toLowerCase().compareTo(b.tenNCC.toLowerCase()),
+      );
+      return list;
+    });
+  }
+
+  /// Returns a realtime stream of all deliveries, sorted by time desc.
+  static Stream<List<DeliveryModel>> streamDeliveries() {
+    return deliveriesRef.orderBy('thoiGian', descending: true).snapshots().map((
+      snapshot,
+    ) {
+      final list = <DeliveryModel>[];
+      for (final doc in snapshot.docs) {
+        try {
+          final raw = doc.data();
+          if (raw is! Map) continue;
+          final data = _toPlainMap(raw);
+          data['id'] = _safeInt(doc.id);
+          list.add(DeliveryModel.fromMap(data));
+        } catch (e) {
+          print('[FS] streamDeliveries skip doc=${doc.id} err=$e');
+          continue;
+        }
+      }
+      return list;
+    });
+  }
+
+  // ─── One-time fetches ─────────────────────────────────────
 
   static Future<List<MaterialModel>> getMaterials() async {
     try {
-      final uid = _currentUserId();
-      print('[FS] getMaterials uid=$uid');
-      final query = uid == null
-          ? materialsRef
-          : materialsRef.where('userId', isEqualTo: uid);
-      final snapshot = await query.get();
-      print('[FS] getMaterials snapshot.size=${snapshot.size}');
+      final snapshot = await materialsRef.get();
       final list = <MaterialModel>[];
       for (final doc in snapshot.docs) {
         try {
@@ -56,7 +235,6 @@ class FirestoreDataService {
       list.sort(
         (a, b) => a.tenVatTu.toLowerCase().compareTo(b.tenVatTu.toLowerCase()),
       );
-      print('[FS] getMaterials result=${list.length}');
       return list;
     } catch (e) {
       print('[FS] getMaterials FAILED: $e');
@@ -66,13 +244,17 @@ class FirestoreDataService {
 
   static Future<void> addMaterial(MaterialModel material) async {
     try {
-      final uid = _currentUserId();
       final id = DateTime.now().millisecondsSinceEpoch.toString();
       final data = material.toMap()..['id'] = int.parse(id);
-      if (uid != null) data['userId'] = uid;
-      print('[FS] addMaterial doc=$id uid=$uid dataKeys=${data.keys.toList()}');
       await materialsRef.doc(id).set(data);
-      print('[FS] addMaterial DONE doc=$id');
+      notifier.notify('material');
+      addNotification(
+        action: 'add',
+        description: 'Thêm vật tư mới: ${material.tenVatTu}',
+        targetType: 'material',
+        targetId: id,
+        targetName: material.tenVatTu,
+      );
     } catch (e) {
       print('[FS] addMaterial FAILED: $e');
       throw Exception('Không thể thêm vật tư: $e');
@@ -83,21 +265,31 @@ class FirestoreDataService {
     if (material.id == 0) return;
     final data = material.toMap();
     await materialsRef.doc(material.id.toString()).set(data);
+    notifier.notify('material');
+    addNotification(
+      action: 'update',
+      description: 'Cập nhật vật tư: ${material.tenVatTu}',
+      targetType: 'material',
+      targetId: material.id.toString(),
+      targetName: material.tenVatTu,
+    );
   }
 
   static Future<void> deleteMaterial(int id) async {
     await materialsRef.doc(id.toString()).delete();
+    notifier.notify('material');
+    addNotification(
+      action: 'delete',
+      description: 'Xóa vật tư ID: $id',
+      targetType: 'material',
+      targetId: id.toString(),
+      targetName: 'Vật tư #$id',
+    );
   }
 
   static Future<List<ProductModel>> getProducts() async {
     try {
-      final uid = _currentUserId();
-      print('[FS] getProducts uid=$uid');
-      final query = uid == null
-          ? productsRef
-          : productsRef.where('userId', isEqualTo: uid);
-      final snapshot = await query.get();
-      print('[FS] getProducts snapshot.size=${snapshot.size}');
+      final snapshot = await productsRef.get();
       final list = <ProductModel>[];
       for (final doc in snapshot.docs) {
         try {
@@ -115,7 +307,6 @@ class FirestoreDataService {
         (a, b) =>
             a.tenSanPham.toLowerCase().compareTo(b.tenSanPham.toLowerCase()),
       );
-      print('[FS] getProducts result=${list.length}');
       return list;
     } catch (e) {
       print('[FS] getProducts FAILED: $e');
@@ -125,13 +316,17 @@ class FirestoreDataService {
 
   static Future<void> addProduct(ProductModel product) async {
     try {
-      final uid = _currentUserId();
       final id = DateTime.now().millisecondsSinceEpoch.toString();
       final data = product.toMap()..['id'] = int.parse(id);
-      if (uid != null) data['userId'] = uid;
-      print('[FS] addProduct doc=$id uid=$uid');
       await productsRef.doc(id).set(data);
-      print('[FS] addProduct DONE doc=$id');
+      notifier.notify('product');
+      addNotification(
+        action: 'add',
+        description: 'Thêm thành phẩm mới: ${product.tenSanPham}',
+        targetType: 'product',
+        targetId: id,
+        targetName: product.tenSanPham,
+      );
     } catch (e) {
       print('[FS] addProduct FAILED: $e');
       throw Exception('Không thể thêm thành phẩm: $e');
@@ -141,21 +336,31 @@ class FirestoreDataService {
   static Future<void> updateProduct(ProductModel product) async {
     if (product.id == 0) return;
     await productsRef.doc(product.id.toString()).set(product.toMap());
+    notifier.notify('product');
+    addNotification(
+      action: 'update',
+      description: 'Cập nhật thành phẩm: ${product.tenSanPham}',
+      targetType: 'product',
+      targetId: product.id.toString(),
+      targetName: product.tenSanPham,
+    );
   }
 
   static Future<void> deleteProduct(int id) async {
     await productsRef.doc(id.toString()).delete();
+    notifier.notify('product');
+    addNotification(
+      action: 'delete',
+      description: 'Xóa thành phẩm ID: $id',
+      targetType: 'product',
+      targetId: id.toString(),
+      targetName: 'Thành phẩm #$id',
+    );
   }
 
   static Future<List<SupplierModel>> getSuppliers() async {
     try {
-      final uid = _currentUserId();
-      print('[FS] getSuppliers uid=$uid');
-      final query = uid == null
-          ? suppliersRef
-          : suppliersRef.where('userId', isEqualTo: uid);
-      final snapshot = await query.get();
-      print('[FS] getSuppliers snapshot.size=${snapshot.size}');
+      final snapshot = await suppliersRef.get();
       final list = <SupplierModel>[];
       for (final doc in snapshot.docs) {
         try {
@@ -172,7 +377,6 @@ class FirestoreDataService {
       list.sort(
         (a, b) => a.tenNCC.toLowerCase().compareTo(b.tenNCC.toLowerCase()),
       );
-      print('[FS] getSuppliers result=${list.length}');
       return list;
     } catch (e) {
       print('[FS] getSuppliers FAILED: $e');
@@ -182,13 +386,17 @@ class FirestoreDataService {
 
   static Future<int> addSupplier(SupplierModel supplier) async {
     try {
-      final uid = _currentUserId();
       final id = DateTime.now().millisecondsSinceEpoch.toString();
       final data = supplier.toMap()..['id'] = int.parse(id);
-      if (uid != null) data['userId'] = uid;
-      print('[FS] addSupplier doc=$id uid=$uid');
       await suppliersRef.doc(id).set(data);
-      print('[FS] addSupplier DONE doc=$id');
+      notifier.notify('supplier');
+      addNotification(
+        action: 'add',
+        description: 'Thêm nhà cung cấp mới: ${supplier.tenNCC}',
+        targetType: 'supplier',
+        targetId: id,
+        targetName: supplier.tenNCC,
+      );
       return int.parse(id);
     } catch (e) {
       print('[FS] addSupplier FAILED: $e');
@@ -199,21 +407,31 @@ class FirestoreDataService {
   static Future<void> updateSupplier(SupplierModel supplier) async {
     if (supplier.id == 0) return;
     await suppliersRef.doc(supplier.id.toString()).set(supplier.toMap());
+    notifier.notify('supplier');
+    addNotification(
+      action: 'update',
+      description: 'Cập nhật nhà cung cấp: ${supplier.tenNCC}',
+      targetType: 'supplier',
+      targetId: supplier.id.toString(),
+      targetName: supplier.tenNCC,
+    );
   }
 
   static Future<void> deleteSupplier(int id) async {
     await suppliersRef.doc(id.toString()).delete();
+    notifier.notify('supplier');
+    addNotification(
+      action: 'delete',
+      description: 'Xóa nhà cung cấp ID: $id',
+      targetType: 'supplier',
+      targetId: id.toString(),
+      targetName: 'Nhà cung cấp #$id',
+    );
   }
 
   static Future<List<DeliveryModel>> getDeliveries() async {
     try {
-      final uid = _currentUserId();
-      print('[FS] getDeliveries uid=$uid');
-      final query = uid == null
-          ? deliveriesRef
-          : deliveriesRef.where('userId', isEqualTo: uid);
-      final snapshot = await query.get();
-      print('[FS] getDeliveries snapshot.size=${snapshot.size}');
+      final snapshot = await deliveriesRef.get();
       final list = <DeliveryModel>[];
       for (final doc in snapshot.docs) {
         try {
@@ -228,7 +446,6 @@ class FirestoreDataService {
         }
       }
       list.sort((a, b) => b.thoiGian.compareTo(a.thoiGian));
-      print('[FS] getDeliveries result=${list.length}');
       return list;
     } catch (e) {
       print('[FS] getDeliveries FAILED: $e');
@@ -238,13 +455,18 @@ class FirestoreDataService {
 
   static Future<int> addDelivery(DeliveryModel delivery) async {
     try {
-      final uid = _currentUserId();
       final id = DateTime.now().millisecondsSinceEpoch.toString();
       final data = delivery.toMap()..['id'] = int.parse(id);
-      if (uid != null) data['userId'] = uid;
-      print('[FS] addDelivery doc=$id uid=$uid');
       await deliveriesRef.doc(id).set(data);
-      print('[FS] addDelivery DONE doc=$id');
+      notifier.notify('delivery');
+      addNotification(
+        action: 'deliver',
+        description:
+            'Tạo phiếu giao: ${delivery.tenSanPham} (${delivery.soKien} kiện)',
+        targetType: 'delivery',
+        targetId: id,
+        targetName: delivery.tenSanPham,
+      );
       return int.parse(id);
     } catch (e) {
       print('[FS] addDelivery FAILED: $e');
@@ -254,10 +476,26 @@ class FirestoreDataService {
 
   static Future<void> updateDelivery(DeliveryModel delivery) async {
     await deliveriesRef.doc(delivery.id.toString()).set(delivery.toMap());
+    notifier.notify('delivery');
+    addNotification(
+      action: 'update',
+      description: 'Cập nhật phiếu giao: ${delivery.tenSanPham}',
+      targetType: 'delivery',
+      targetId: delivery.id.toString(),
+      targetName: delivery.tenSanPham,
+    );
   }
 
   static Future<void> deleteDelivery(int id) async {
     await deliveriesRef.doc(id.toString()).delete();
+    notifier.notify('delivery');
+    addNotification(
+      action: 'delete',
+      description: 'Xóa phiếu giao ID: $id',
+      targetType: 'delivery',
+      targetId: id.toString(),
+      targetName: 'Phiếu giao #$id',
+    );
   }
 
   static Future<void> clearDeliveries() async {
@@ -265,6 +503,7 @@ class FirestoreDataService {
     for (final doc in snapshot.docs) {
       await doc.reference.delete();
     }
+    notifier.notify('delivery');
   }
 
   static Map<String, dynamic> _toPlainMap(dynamic raw) {

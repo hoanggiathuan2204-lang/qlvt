@@ -1,26 +1,18 @@
-# TODO: Fix Flutter Web Build
+# TODO - Fix Responsive & Add Notification System
 
-## Mục tiêu
-Fix lỗi build web và đảm bảo đồng bộ dữ liệu giữa Web và App qua Firestore.
+## Part 1: Fix Responsive Mobile Web
+- [x] Step 1.1: Fix `web/index.html` - Add viewport meta tag for mobile
+- [x] Step 1.2: Update `web/manifest.json` - Ensure responsive display
+- [x] Step 1.3: Update `lib/widgets/dashboard_header.dart` - Show notification bell on mobile too
 
-## Các bước thực hiện
+## Part 2: Build Notification System
+- [x] Step 2.1: Create `lib/models/notification_model.dart` - Notification model
+- [x] Step 2.2: Update `lib/services/firestore_data_service.dart` - Add notifications collection, addNotification(), streamNotifications()
+- [x] Step 2.3: Update all CRUD methods in FirestoreDataService to log notifications
+- [x] Step 2.4: Create `lib/widgets/notification_panel.dart` - Notification panel widget
+- [x] Step 2.5: Update `lib/widgets/dashboard_header.dart` - Integrate notification bell with badge + dropdown overlay
+- [x] Step 2.6: Update controllers - Add import/export notifications
 
-### Bước 1: Fix `lib/database/app_database.dart` ✅
-- Sử dụng conditional export (`dart.library.io`) để web dùng stub, native dùng SQLite thật.
-
-### Bước 2: Fix `lib/screens/delivery_history_screen.dart` ✅
-- Xóa `import 'dart:io'`
-- Dùng `image_utils` wrapper để xử lý ảnh cross-platform
-
-### Bước 3: Fix `lib/widgets/delivery_dialog.dart` ✅
-- Xóa `import 'dart:io'`, `import 'package:path_provider/...'`, `import 'package:path/...'`
-- Xóa `Image.file` dùng placeholder text
-- Giữ chức năng chọn ảnh qua `FilePicker`
-
-### Bước 4: Kiểm tra build web ✅
-- `flutter build web --release` **thành công** ✅
-- File `main.dart.js` đã được tạo, không lỗi compile
-
-## Kết quả
-✅ Đã fix thành công! App có thể build cho cả web và native.
-
+## Part 3: Verify
+- [x] Verify build compiles successfully (flutter analyze passes with zero errors)
+- [x] Clean up unused `_titles` and `_i` variable warnings in app_shell.dart

@@ -76,7 +76,10 @@ class FirestoreDataService {
         targetId: targetId,
         targetName: targetName,
       );
-      await notificationsRef.doc(id).set(notification.toMap());
+      final data = notification.toMap();
+      // Store timestamp as Firestore Timestamp for accurate ordering and queries
+      data['timestamp'] = Timestamp.fromDate(notification.timestamp);
+      await notificationsRef.doc(id).set(data);
     } catch (e) {
       print('[FS] addNotification FAILED: $e');
     }
@@ -112,7 +115,7 @@ class FirestoreDataService {
     try {
       final yesterday = DateTime.now().subtract(const Duration(hours: 24));
       final snapshot = await notificationsRef
-          .where('timestamp', isGreaterThan: yesterday.toIso8601String())
+          .where('timestamp', isGreaterThan: Timestamp.fromDate(yesterday))
           .get();
       return snapshot.docs.length;
     } catch (e) {

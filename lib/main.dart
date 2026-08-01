@@ -178,6 +178,7 @@ class _LoginPageState extends State<LoginPage> {
 
     final localUser = controller.login(username, password);
     if (localUser != null) {
+      AuthService.instance.login(localUser);
       if (!mounted) return;
       try {
         final fbUser = await FirebaseService.signInAnonymously();
@@ -256,105 +257,121 @@ class _LoginPageState extends State<LoginPage> {
     return Scaffold(
       backgroundColor: const Color(0xffF4F7FC),
       body: Center(
-        child: Container(
-          width: 430,
-          padding: const EdgeInsets.all(35),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(22),
-            boxShadow: const [
-              BoxShadow(
-                color: Colors.black12,
-                blurRadius: 25,
-                offset: Offset(0, 10),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Image.asset("assets/images/logo.png", height: 110),
-              const SizedBox(height: 20),
-              const Text(
-                "CÔNG TY CỔ PHẦN",
-                style: TextStyle(fontSize: 15, color: Colors.grey),
-              ),
-              const SizedBox(height: 5),
-              const Text(
-                "ÁNH DƯƠNG",
-                style: TextStyle(
-                  fontSize: 30,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xff0D4F8B),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isMobile = constraints.maxWidth < 500;
+            final cardWidth = isMobile ? constraints.maxWidth * 0.92 : 430.0;
+            final padding = isMobile ? 20.0 : 35.0;
+            final logoSize = isMobile ? 80.0 : 110.0;
+            final titleSize = isMobile ? 24.0 : 30.0;
+
+            return SingleChildScrollView(
+              padding: EdgeInsets.all(isMobile ? 16 : 24),
+              child: Container(
+                width: cardWidth,
+                padding: EdgeInsets.all(padding),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(22),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 25,
+                      offset: Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Image.asset("assets/images/logo.png", height: logoSize),
+                    const SizedBox(height: 20),
+                    const Text(
+                      "CÔNG TY CỔ PHẦN",
+                      style: TextStyle(fontSize: 15, color: Colors.grey),
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      "ÁNH DƯƠNG",
+                      style: TextStyle(
+                        fontSize: titleSize,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xff0D4F8B),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      "ERP - Hệ thống Quản lý vật tư",
+                      style: TextStyle(color: Colors.grey, fontSize: 15),
+                    ),
+                    const SizedBox(height: 35),
+                    TextField(
+                      controller: usernameController,
+                      decoration: const InputDecoration(
+                        labelText: "Tên đăng nhập",
+                        prefixIcon: Icon(Icons.person),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    TextField(
+                      controller: passwordController,
+                      obscureText: true,
+                      onSubmitted: (_) => login(),
+                      decoration: const InputDecoration(
+                        labelText: "Mật khẩu",
+                        prefixIcon: Icon(Icons.lock),
+                      ),
+                    ),
+                    const SizedBox(height: 30),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: ElevatedButton(
+                        onPressed: login,
+                        child: const Text(
+                          "ĐĂNG NHẬP",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Divider(),
+                    const SizedBox(height: 16),
+                    const Text(
+                      "Hoặc đăng nhập bằng link",
+                      style: TextStyle(fontSize: 14, color: Colors.grey),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: emailController,
+                      decoration: const InputDecoration(
+                        labelText: "Email",
+                        prefixIcon: Icon(Icons.email),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: ElevatedButton.icon(
+                        onPressed: _sendMagicLink,
+                        icon: const Icon(Icons.send),
+                        label: const Text("Gửi link đăng nhập"),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    const Text(
+                      "© 2025 Công ty Cổ phần Ánh Dương",
+                      style: TextStyle(color: Colors.grey, fontSize: 12),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 8),
-              const Text(
-                "ERP - Hệ thống Quản lý vật tư",
-                style: TextStyle(color: Colors.grey, fontSize: 15),
-              ),
-              const SizedBox(height: 35),
-              TextField(
-                controller: usernameController,
-                decoration: const InputDecoration(
-                  labelText: "Tên đăng nhập",
-                  prefixIcon: Icon(Icons.person),
-                ),
-              ),
-              const SizedBox(height: 20),
-              TextField(
-                controller: passwordController,
-                obscureText: true,
-                onSubmitted: (_) => login(),
-                decoration: const InputDecoration(
-                  labelText: "Mật khẩu",
-                  prefixIcon: Icon(Icons.lock),
-                ),
-              ),
-              const SizedBox(height: 30),
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton(
-                  onPressed: login,
-                  child: const Text(
-                    "ĐĂNG NHẬP",
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              const Divider(),
-              const SizedBox(height: 16),
-              const Text(
-                "Hoặc đăng nhập bằng link",
-                style: TextStyle(fontSize: 14, color: Colors.grey),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: emailController,
-                decoration: const InputDecoration(
-                  labelText: "Email",
-                  prefixIcon: Icon(Icons.email),
-                ),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton.icon(
-                  onPressed: _sendMagicLink,
-                  icon: const Icon(Icons.send),
-                  label: const Text("Gửi link đăng nhập"),
-                ),
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                "© 2025 Công ty Cổ phần Ánh Dương",
-                style: TextStyle(color: Colors.grey, fontSize: 12),
-              ),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );

@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 
+import '../widgets/dashboard_sidebar.dart';
+import '../theme/app_colors.dart';
+
 import 'dashboard_screen.dart';
 import 'material_screen.dart';
 import 'supplier_screen.dart';
 import 'product_screen.dart';
 import 'delivery_history_screen.dart';
 import 'report_screen.dart';
-import '../widgets/dashboard_sidebar.dart';
-import '../theme/app_colors.dart';
 
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
@@ -17,70 +18,92 @@ class AppShell extends StatefulWidget {
 }
 
 class _AppShellState extends State<AppShell> {
-  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   int _selected = 0;
 
-  static const _routes = {
-    0: '/dashboard',
-    1: '/materials',
-    2: '/suppliers',
-    3: '/products',
-    4: '/delivery',
-    5: '/reports',
-  };
+  // Responsive breakpoint
+  static const double _desktopBreakpoint = 900;
+
+  // Screens list for IndexedStack (must match menu order in DashboardSidebar)
+  static const int _screenCount = 6;
 
   void _onSelect(int index) {
-    final route = _routes[index];
-    if (route == null) return;
+    if (index < 0 || index >= _screenCount) return;
     setState(() => _selected = index);
-    _navigatorKey.currentState?.pushReplacementNamed(route);
   }
 
-  Route<dynamic> _onGenerate(RouteSettings settings) {
-    switch (settings.name) {
-      case '/dashboard':
-        return MaterialPageRoute(
-          builder: (_) => const DashboardScreen(showSidebar: false),
-        );
-      case '/materials':
-        return MaterialPageRoute(
-          builder: (_) => const MaterialScreen(showSidebar: false),
-        );
-      case '/suppliers':
-        return MaterialPageRoute(
-          builder: (_) => const SupplierScreen(showSidebar: false),
-        );
-      case '/products':
-        return MaterialPageRoute(builder: (_) => const ProductScreen());
-      case '/delivery':
-        return MaterialPageRoute(builder: (_) => const DeliveryHistoryScreen());
-      case '/reports':
-        return MaterialPageRoute(
-          builder: (_) => const ReportScreen(showSidebar: false),
-        );
-      default:
-        return MaterialPageRoute(
-          builder: (_) => const DashboardScreen(showSidebar: false),
-        );
-    }
+  /// Builds the list of screen widgets with onMenuTap wired for mobile.
+  List<Widget> _buildScreens() {
+    return [
+      DashboardScreen(
+        showSidebar: false,
+        onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
+      ),
+      MaterialScreen(
+        showSidebar: false,
+        onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
+      ),
+      SupplierScreen(
+        showSidebar: false,
+        onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
+      ),
+      ProductScreen(
+        showSidebar: false,
+        onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
+      ),
+      DeliveryHistoryScreen(
+        showSidebar: false,
+        onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
+      ),
+      ReportScreen(
+        showSidebar: false,
+        onMenuTap: () => _scaffoldKey.currentState?.openDrawer(),
+      ),
+    ];
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: Row(
-        children: [
-          DashboardSidebar(selectedIndex: _selected, onSelect: _onSelect),
-          Expanded(
-            child: Navigator(
-              key: _navigatorKey,
-              initialRoute: '/dashboard',
-              onGenerateRoute: _onGenerate,
+    final screens = _buildScreens();
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isDesktop = constraints.maxWidth >= _desktopBreakpoint;
+
+        if (isDesktop) {
+          // ─── Desktop layout: sidebar + content ───
+          return Scaffold(
+            backgroundColor: AppColors.background,
+            body: Row(
+              children: [
+                DashboardSidebar(selectedIndex: _selected, onSelect: _onSelect),
+                Expanded(
+                  child: IndexedStack(index: _selected, children: screens),
+                ),
+              ],
             ),
-          ),
-        ],
-      ),
+          );
+        } else {
+          // ─── Mobile layout: drawer + content (NO AppBar) ───
+          return Scaffold(
+            key: _scaffoldKey,
+            backgroundColor: AppColors.background,
+            drawer: Drawer(
+              child: DashboardSidebar(
+                selectedIndex: _selected,
+                onSelect: (index) {
+                  _onSelect(index);
+                  Navigator.of(context).pop(); // close drawer
+                },
+                onCloseDrawer: () {
+                  Navigator.of(context).pop(); // close drawer
+                },
+              ),
+            ),
+            body: IndexedStack(index: _selected, children: screens),
+          );
+        }
+      },
     );
   }
 }

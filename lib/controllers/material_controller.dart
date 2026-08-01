@@ -60,8 +60,15 @@ class MaterialController {
     material.soLuongTon += quantity;
     await FirestoreDataService.updateMaterial(material);
 
-    // Ghi lịch sử nhập kho (đang dùng Firestore; có thể mở rộng sau)
-    await Future<void>.value();
+    // Ghi lịch sử nhập kho
+    FirestoreDataService.addNotification(
+      action: 'import',
+      description:
+          'Nhập kho $quantity ${material.donViTinh} "${material.tenVatTu}"',
+      targetType: 'material',
+      targetId: material.id.toString(),
+      targetName: material.tenVatTu,
+    );
   }
 
   //------------------------------------
@@ -79,8 +86,15 @@ class MaterialController {
     material.soLuongTon -= quantity;
     await FirestoreDataService.updateMaterial(material);
 
-    // Ghi lịch sử xuất kho (đang dùng Firestore; có thể mở rộng sau)
-    await Future<void>.value();
+    // Ghi lịch sử xuất kho
+    FirestoreDataService.addNotification(
+      action: 'export',
+      description:
+          'Xuất kho $quantity ${material.donViTinh} "${material.tenVatTu}"',
+      targetType: 'material',
+      targetId: material.id.toString(),
+      targetName: material.tenVatTu,
+    );
 
     return true;
   }

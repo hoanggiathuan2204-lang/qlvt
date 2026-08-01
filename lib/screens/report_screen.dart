@@ -10,7 +10,8 @@ import '../widgets/dashboard_sidebar.dart';
 
 class ReportScreen extends StatefulWidget {
   final bool showSidebar;
-  const ReportScreen({super.key, this.showSidebar = true});
+  final VoidCallback? onMenuTap;
+  const ReportScreen({super.key, this.showSidebar = true, this.onMenuTap});
 
   @override
   State<ReportScreen> createState() => _ReportScreenState();
@@ -105,27 +106,37 @@ class _ReportScreenState extends State<ReportScreen>
       if (!mounted) return;
       setState(() => loading = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Lỗi tải báo cáo: $e'), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text('Lỗi tải báo cáo: $e'),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600;
+
     final Widget content = Column(
       children: [
-        DashboardHeader(title: 'Báo cáo & Thống kê', userName: 'Administrator'),
+        DashboardHeader(
+          title: 'Báo cáo & Thống kê',
+          userName: 'Administrator',
+          onMenuTap: widget.onMenuTap,
+        ),
         if (loading)
           const Expanded(child: Center(child: CircularProgressIndicator()))
         else
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.all(24),
+              padding: EdgeInsets.all(isMobile ? 12 : 24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildKpiRow(),
-                  const SizedBox(height: 20),
+                  SizedBox(height: isMobile ? 12 : 20),
                   TabBar(
                     controller: _tab,
                     labelColor: AppColors.primary,
@@ -221,8 +232,11 @@ class _ReportScreenState extends State<ReportScreen>
 
   Widget _kpi(String label, String value, IconData icon, Color color) {
     final bg = Color.fromARGB(30, color.red, color.green, color.blue);
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600;
+
     return Container(
-      width: 170,
+      width: isMobile ? (screenWidth - 40) / 2 : 170,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,

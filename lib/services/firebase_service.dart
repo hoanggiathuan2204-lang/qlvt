@@ -29,6 +29,9 @@ class FirebaseService {
       }
 
       await Firebase.initializeApp(options: options);
+      if (kIsWeb) {
+        await auth.setPersistence(Persistence.LOCAL);
+      }
       _configured = true;
     } catch (e) {
       print('Firebase init error: $e');
@@ -79,7 +82,10 @@ class FirebaseService {
     if (!_configured) {
       throw Exception('Firebase chưa được cấu hình.');
     }
-    final credential = await auth.signInWithEmailLink(email: email, emailLink: link);
+    final credential = await auth.signInWithEmailLink(
+      email: email,
+      emailLink: link,
+    );
     return credential.user;
   }
 

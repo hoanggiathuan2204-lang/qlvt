@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../data/app_data.dart';
 
@@ -8,9 +8,6 @@ import 'supplier_screen.dart';
 import 'product_screen.dart';
 import 'delivery_history_screen.dart';
 import 'report_screen.dart';
-import '../services/auth_service.dart';
-import '../services/firestore_data_service.dart';
-import 'package:flutter/foundation.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -120,7 +117,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Hệ thống quản lý vật tư"),
+        title: const Text("Hß╗ç thß╗æng quß║ún l├╜ vß║¡t t╞░"),
         centerTitle: true,
       ),
 
@@ -156,12 +153,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text("Xin chào!", style: TextStyle(color: Colors.grey)),
+                      Text("Xin ch├áo!", style: TextStyle(color: Colors.grey)),
 
                       SizedBox(height: 4),
 
                       Text(
-                        "Chào mừng đến hệ thống Quản lý vật tư",
+                        "Ch├áo mß╗½ng ─æß║┐n hß╗ç thß╗æng Quß║ún l├╜ vß║¡t t╞░",
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
@@ -176,14 +173,14 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 18),
 
             //------------------------------------
-            // Thống kê
+            // Thß╗æng k├¬
             //------------------------------------
             Row(
               children: [
                 Expanded(
                   child: infoCard(
                     icon: Icons.inventory,
-                    title: "Tổng vật tư",
+                    title: "Tß╗òng vß║¡t t╞░",
                     future: materialController.totalMaterial(),
                     color: Colors.blue,
                   ),
@@ -194,7 +191,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 Expanded(
                   child: infoCard(
                     icon: Icons.factory,
-                    title: "Thành phẩm",
+                    title: "Th├ánh phß║⌐m",
                     future: productController.totalProduct(),
                     color: Colors.green,
                   ),
@@ -205,7 +202,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 Expanded(
                   child: infoCard(
                     icon: Icons.warning_amber,
-                    title: "Cảnh báo",
+                    title: "Cß║únh b├ío",
                     future: materialController.warningMaterial(),
                     color: Colors.orange,
                   ),
@@ -240,35 +237,35 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   menu(
                     Icons.inventory,
-                    "Quản lý vật tư",
+                    "Quß║ún l├╜ vß║¡t t╞░",
                     Colors.blue,
                     const MaterialScreen(),
                   ),
 
                   menu(
                     Icons.people,
-                    "Nhà cung cấp",
+                    "Nh├á cung cß║Ñp",
                     Colors.green,
                     const SupplierScreen(),
                   ),
 
                   menu(
                     Icons.factory,
-                    "Quản lý thành phẩm",
+                    "Quß║ún l├╜ th├ánh phß║⌐m",
                     Colors.orange,
                     const ProductScreen(),
                   ),
 
                   menu(
                     Icons.local_shipping,
-                    "Lịch sử giao hàng",
+                    "Lß╗ïch sß╗¡ giao h├áng",
                     Colors.red,
                     const DeliveryHistoryScreen(),
                   ),
 
                   menu(
                     Icons.bar_chart,
-                    "Thống kê",
+                    "Thß╗æng k├¬",
                     Colors.purple,
                     const ReportScreen(),
                   ),
@@ -295,7 +292,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           SizedBox(height: 12),
 
                           Text(
-                            "Đăng xuất",
+                            "─É─âng xuß║Ñt",
                             style: TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ],
@@ -308,34 +305,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
-      floatingActionButton: kDebugMode
-          ? FloatingActionButton(
-              tooltip: 'Debug: create notification',
-              child: const Icon(Icons.notification_add),
-              onPressed: () async {
-                // Login a debug user and create a sample notification
-                AuthService.instance.login(
-                  const AuthUser(
-                    username: 'debug',
-                    role: 'owner',
-                    displayName: 'Debug User',
-                  ),
-                );
-                await FirestoreDataService.addNotification(
-                  action: 'add',
-                  description: 'Debug notification created from UI',
-                  targetType: 'debug',
-                  targetId: '0',
-                  targetName: 'DebugItem',
-                );
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Debug notification sent')),
-                  );
-                }
-              },
-            )
-          : null,
     );
   }
 }

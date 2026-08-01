@@ -10,11 +10,9 @@ class DeliveryController {
   //==================================================
 
   Future<void> load() async {
-    if (!_loaded) {
-      _deliveries.clear();
-      _deliveries.addAll(await FirestoreDataService.getDeliveries());
-      _loaded = true;
-    }
+    _deliveries.clear();
+    _deliveries.addAll(await FirestoreDataService.getDeliveries());
+    _loaded = true;
   }
 
   //==================================================

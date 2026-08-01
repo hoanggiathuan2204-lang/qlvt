@@ -50,6 +50,13 @@ class ProductController {
   Future<void> importProduct(ProductModel product, int quantity) async {
     product.soKien += quantity;
     await FirestoreDataService.updateProduct(product);
+    FirestoreDataService.addNotification(
+      action: 'import',
+      description: 'Nhập kho $quantity "${product.tenSanPham}"',
+      targetType: 'product',
+      targetId: product.id.toString(),
+      targetName: product.tenSanPham,
+    );
   }
 
   //------------------------------------
@@ -59,6 +66,13 @@ class ProductController {
     if (product.soKien < quantity) return false;
     product.soKien -= quantity;
     await FirestoreDataService.updateProduct(product);
+    FirestoreDataService.addNotification(
+      action: 'export',
+      description: 'Xuất kho $quantity "${product.tenSanPham}"',
+      targetType: 'product',
+      targetId: product.id.toString(),
+      targetName: product.tenSanPham,
+    );
     return true;
   }
 

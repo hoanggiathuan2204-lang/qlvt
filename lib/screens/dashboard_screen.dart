@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../data/app_data.dart';
 import '../models/delivery_model.dart';
 import '../models/material_model.dart';
 import '../screens/delivery_history_screen.dart';
@@ -14,7 +15,8 @@ import '../widgets/dashboard_sidebar.dart';
 
 class DashboardScreen extends StatefulWidget {
   final bool showSidebar;
-  const DashboardScreen({super.key, this.showSidebar = true});
+  final VoidCallback? onMenuTap;
+  const DashboardScreen({super.key, this.showSidebar = true, this.onMenuTap});
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -62,16 +64,41 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> _loadData() async {
     if (!mounted) return;
     setState(() {
-      totalMaterial = 0;
-      totalProduct = 0;
-      totalSupplier = 0;
-      totalDelivery = 0;
-      warningCount = 0;
-      totalInventory = 0;
-      warningList = [];
-      recentDeliveries = [];
-      loading = false;
+      loading = true;
     });
+
+    try {
+      final results = await Future.wait([
+        AppData.materialController.totalMaterial(),
+        AppData.materialController.totalInventory(),
+        AppData.materialController.warningMaterial(),
+        AppData.productController.totalProduct(),
+        AppData.deliveryController.totalDelivery(),
+        AppData.supplierController.total(),
+      ]);
+
+      if (!mounted) return;
+      setState(() {
+        totalMaterial = results[0] as int;
+        totalInventory = results[1] as int;
+        warningCount = results[2] as int;
+        totalProduct = results[3] as int;
+        totalDelivery = results[4] as int;
+        totalSupplier = results[5] as int;
+        loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        loading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Lỗi tải dữ liệu dashboard: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   @override
@@ -100,24 +127,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
       case 0:
         return _buildDashboard();
       case 1:
-        return const MaterialScreen();
+        return MaterialScreen(showSidebar: false, onMenuTap: widget.onMenuTap);
       case 2:
-        return const SupplierScreen();
+        return SupplierScreen(showSidebar: false, onMenuTap: widget.onMenuTap);
       case 3:
-        return const ProductScreen(showSidebar: false);
+        return ProductScreen(showSidebar: false, onMenuTap: widget.onMenuTap);
       case 4:
-        return const DeliveryHistoryScreen(showSidebar: false);
+        return DeliveryHistoryScreen(
+          showSidebar: false,
+          onMenuTap: widget.onMenuTap,
+        );
       case 5:
-        return const ReportScreen();
+        return ReportScreen(showSidebar: false, onMenuTap: widget.onMenuTap);
       default:
         return _buildDashboard();
     }
   }
 
   Widget _buildDashboard() {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600;
+
     return Column(
       children: [
-        DashboardHeader(title: 'Dashboard', userName: 'Administrator'),
+        DashboardHeader(
+          title: 'Dashboard',
+          userName: 'Administrator',
+          onMenuTap: widget.onMenuTap,
+        ),
         if (loading)
           const Expanded(child: Center(child: CircularProgressIndicator()))
         else
@@ -125,32 +162,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
             child: RefreshIndicator(
               onRefresh: _loadData,
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(25),
+                padding: EdgeInsets.all(isMobile ? 12 : 25),
                 physics: const AlwaysScrollableScrollPhysics(),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Title
                     Row(
                       children: [
-                        const Expanded(
+                        Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 'Tổng quan hệ thống',
                                 style: TextStyle(
-                                  fontSize: 28,
+                                  fontSize: isMobile ? 20 : 28,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              SizedBox(height: 4),
-                              Text(
-                                'Hệ thống quản lý vật tư - Công ty Cổ phần Ánh Dương',
-                                style: TextStyle(
-                                  color: Colors.grey,
-                                  fontSize: 15,
+                              if (!isMobile) const SizedBox(height: 4),
+                              if (!isMobile)
+                                const Text(
+                                  'Hệ thống quản lý vật tư - Công ty Cổ phần Ánh Dương',
+                                  style: TextStyle(
+                                    color: Colors.grey,
+                                    fontSize: 15,
+                                  ),
                                 ),
-                              ),
                             ],
                           ),
                         ),
@@ -164,64 +203,84 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 25),
+                    SizedBox(height: isMobile ? 12 : 25),
+                    // Dashboard cards
                     Wrap(
-                      spacing: 20,
-                      runSpacing: 20,
+                      spacing: isMobile ? 8 : 20,
+                      runSpacing: isMobile ? 8 : 20,
                       children: [
-                        DashboardCard(
-                          title: 'Vật tư',
-                          value: totalMaterial.toString(),
-                          subTitle: 'Loại đang quản lý',
-                          icon: Icons.inventory_2,
-                          color: AppColors.blue,
+                        SizedBox(
+                          width: isMobile ? (screenWidth - 40) / 2 : null,
+                          child: DashboardCard(
+                            title: 'Vật tư',
+                            value: totalMaterial.toString(),
+                            subTitle: 'Loại đang quản lý',
+                            icon: Icons.inventory_2,
+                            color: AppColors.blue,
+                          ),
                         ),
-                        DashboardCard(
-                          title: 'Tồn kho',
-                          value: _fmt(totalInventory),
-                          subTitle: 'Tổng số lượng',
-                          icon: Icons.warehouse,
-                          color: AppColors.green,
+                        SizedBox(
+                          width: isMobile ? (screenWidth - 40) / 2 : null,
+                          child: DashboardCard(
+                            title: 'Tồn kho',
+                            value: _fmt(totalInventory),
+                            subTitle: 'Tổng số lượng',
+                            icon: Icons.warehouse,
+                            color: AppColors.green,
+                          ),
                         ),
-                        DashboardCard(
-                          title: 'Thành phẩm',
-                          value: totalProduct.toString(),
-                          subTitle: 'Trong kho',
-                          icon: Icons.factory,
-                          color: AppColors.orange,
+                        SizedBox(
+                          width: isMobile ? (screenWidth - 40) / 2 : null,
+                          child: DashboardCard(
+                            title: 'Thành phẩm',
+                            value: totalProduct.toString(),
+                            subTitle: 'Trong kho',
+                            icon: Icons.factory,
+                            color: AppColors.orange,
+                          ),
                         ),
-                        DashboardCard(
-                          title: 'Nhà cung cấp',
-                          value: totalSupplier.toString(),
-                          subTitle: 'Đối tác',
-                          icon: Icons.business,
-                          color: AppColors.purple,
+                        SizedBox(
+                          width: isMobile ? (screenWidth - 40) / 2 : null,
+                          child: DashboardCard(
+                            title: 'Nhà cung cấp',
+                            value: totalSupplier.toString(),
+                            subTitle: 'Đối tác',
+                            icon: Icons.business,
+                            color: AppColors.purple,
+                          ),
                         ),
-                        DashboardCard(
-                          title: 'Phiếu giao',
-                          value: totalDelivery.toString(),
-                          subTitle: 'Đã giao',
-                          icon: Icons.local_shipping,
-                          color: const Color(0xff0D4F8B),
+                        SizedBox(
+                          width: isMobile ? (screenWidth - 40) / 2 : null,
+                          child: DashboardCard(
+                            title: 'Phiếu giao',
+                            value: totalDelivery.toString(),
+                            subTitle: 'Đã giao',
+                            icon: Icons.local_shipping,
+                            color: const Color(0xff0D4F8B),
+                          ),
                         ),
-                        DashboardCard(
-                          title: 'Cảnh báo',
-                          value: warningCount.toString(),
-                          subTitle: 'Vật tư thiếu hàng',
-                          icon: Icons.warning_amber,
-                          color: warningCount > 0
-                              ? AppColors.danger
-                              : AppColors.subText,
+                        SizedBox(
+                          width: isMobile ? (screenWidth - 40) / 2 : null,
+                          child: DashboardCard(
+                            title: 'Cảnh báo',
+                            value: warningCount.toString(),
+                            subTitle: 'Vật tư thiếu hàng',
+                            icon: Icons.warning_amber,
+                            color: warningCount > 0
+                                ? AppColors.danger
+                                : AppColors.subText,
+                          ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 30),
-                    Row(
+                    SizedBox(height: isMobile ? 16 : 30),
+                    // Recent deliveries + Warning
+                    Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(flex: 3, child: _recentDeliveriesCard()),
-                        const SizedBox(width: 20),
-                        Expanded(flex: 2, child: _warningCard()),
+                        _recentDeliveriesCard(),
+                        SizedBox(height: isMobile ? 12 : 20),
+                        _warningCard(),
                       ],
                     ),
                   ],

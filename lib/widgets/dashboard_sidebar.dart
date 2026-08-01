@@ -8,11 +8,13 @@ import '../theme/app_sizes.dart';
 class DashboardSidebar extends StatelessWidget {
   final int selectedIndex;
   final ValueChanged<int> onSelect;
+  final VoidCallback? onCloseDrawer;
 
   const DashboardSidebar({
     super.key,
     required this.selectedIndex,
     required this.onSelect,
+    this.onCloseDrawer,
   });
 
   static const _menus = [
@@ -94,7 +96,10 @@ class DashboardSidebar extends StatelessWidget {
                   (m) => _MenuItem(
                     menu: m,
                     selected: selectedIndex == m.index,
-                    onTap: () => onSelect(m.index),
+                    onTap: () {
+                      onSelect(m.index);
+                      onCloseDrawer?.call();
+                    },
                   ),
                 ),
               ],
@@ -208,7 +213,10 @@ class _MenuItem extends StatelessWidget {
         ),
         child: ListTile(
           dense: true,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 10,
+            vertical: 2,
+          ),
           leading: Container(
             width: 34,
             height: 34,
@@ -241,7 +249,9 @@ class _MenuItem extends StatelessWidget {
                 )
               : null,
           onTap: onTap,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       ),
     );

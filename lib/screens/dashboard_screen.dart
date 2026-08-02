@@ -9,6 +9,7 @@ import '../screens/product_screen.dart';
 import '../screens/report_screen.dart';
 import '../screens/supplier_screen.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_sizes.dart';
 import '../widgets/dashboard_card.dart';
 import '../widgets/dashboard_header.dart';
 import '../widgets/dashboard_sidebar.dart';
@@ -79,12 +80,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
       if (!mounted) return;
       setState(() {
-        totalMaterial = results[0] as int;
-        totalInventory = results[1] as int;
-        warningCount = results[2] as int;
-        totalProduct = results[3] as int;
-        totalDelivery = results[4] as int;
-        totalSupplier = results[5] as int;
+        if (results.length >= 6) {
+          totalMaterial = results[0] as int;
+          totalInventory = results[1] as int;
+          warningCount = results[2] as int;
+          totalProduct = results[3] as int;
+          totalDelivery = results[4] as int;
+          totalSupplier = results[5] as int;
+        } else {
+          totalMaterial = 0;
+          totalInventory = 0;
+          warningCount = 0;
+          totalProduct = 0;
+          totalDelivery = 0;
+          totalSupplier = 0;
+        }
         loading = false;
       });
     } catch (e) {
@@ -105,17 +115,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     final Widget content = _buildRightPanel();
     if (widget.showSidebar) {
-      return Scaffold(
-        backgroundColor: AppColors.background,
-        body: Row(
-          children: [
-            DashboardSidebar(
-              selectedIndex: selectedMenu,
-              onSelect: (v) => setState(() => selectedMenu = v),
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          final hasSpace = constraints.maxWidth >= AppSizes.sidebarWidth + 400;
+          if (!hasSpace) {
+            return Scaffold(backgroundColor: AppColors.background, body: content);
+          }
+          return Scaffold(
+            backgroundColor: AppColors.background,
+            body: Row(
+              children: [
+                DashboardSidebar(
+                  selectedIndex: selectedMenu,
+                  onSelect: (v) => setState(() => selectedMenu = v),
+                ),
+                Expanded(child: content),
+              ],
             ),
-            Expanded(child: content),
-          ],
-        ),
+          );
+        },
       );
     }
 

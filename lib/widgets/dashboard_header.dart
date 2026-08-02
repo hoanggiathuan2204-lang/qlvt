@@ -48,47 +48,54 @@ class _DashboardHeaderState extends State<DashboardHeader> {
     }
 
     _overlayEntry = OverlayEntry(
-      builder: (context) => GestureDetector(
-        onTap: () {
-          _overlayEntry?.remove();
-          _overlayEntry = null;
-        },
-        child: Material(
-          color: Colors.transparent,
-          child: CompositedTransformFollower(
-            link: _layerLink,
-            offset: const Offset(-280, 56),
-            targetAnchor: Alignment.topRight,
-            followerAnchor: Alignment.topRight,
-            child: Container(
-              width: 340,
-              constraints: const BoxConstraints(maxHeight: 420),
-              margin: const EdgeInsets.only(top: 8),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 20,
-                    offset: Offset(0, 8),
+      builder: (context) {
+        final screenWidth = MediaQuery.of(context).size.width;
+        final isMobile = screenWidth < 600;
+        final panelWidth = isMobile ? screenWidth - 32.0 : 340.0;
+        final offsetX = isMobile ? -8.0 : -280.0;
+
+        return GestureDetector(
+          onTap: () {
+            _overlayEntry?.remove();
+            _overlayEntry = null;
+          },
+          child: Material(
+            color: Colors.transparent,
+            child: CompositedTransformFollower(
+              link: _layerLink,
+              offset: Offset(offsetX, 56.0),
+              targetAnchor: Alignment.topRight,
+              followerAnchor: Alignment.topRight,
+              child: Container(
+                width: panelWidth,
+                constraints: BoxConstraints(maxHeight: 420, maxWidth: screenWidth),
+                margin: const EdgeInsets.only(top: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 20,
+                      offset: Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: NotificationPanel(
+                    asOverlay: true,
+                    onClose: () {
+                      _overlayEntry?.remove();
+                      _overlayEntry = null;
+                    },
                   ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: NotificationPanel(
-                  asOverlay: true,
-                  onClose: () {
-                    _overlayEntry?.remove();
-                    _overlayEntry = null;
-                  },
                 ),
               ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
 
     Overlay.of(context).insert(_overlayEntry!);
@@ -191,6 +198,27 @@ class _DashboardHeaderState extends State<DashboardHeader> {
 
             //─── Notification bell (always visible) ──
             _notificationBell(),
+
+            // Quick test notification (small button) — helpful for E2E testing on web/desktop
+            IconButton(
+              tooltip: 'Test thông báo',
+              icon: const Icon(
+                Icons.add_alert_outlined,
+                size: 20,
+                color: AppColors.subText,
+              ),
+              onPressed: () async {
+                try {
+                  await FirestoreDataService.addNotification(
+                    action: 'test',
+                    description: 'Thông báo kiểm tra từ UI',
+                    targetType: 'test',
+                    targetId: DateTime.now().millisecondsSinceEpoch.toString(),
+                    targetName: 'Kiểm tra',
+                  );
+                } catch (_) {}
+              },
+            ),
 
             const SizedBox(width: 8),
 

@@ -6,6 +6,7 @@ import '../data/app_data.dart';
 import '../models/material_model.dart';
 import '../services/firestore_data_service.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_sizes.dart';
 import '../widgets/dashboard_header.dart';
 import '../widgets/dashboard_sidebar.dart';
 import '../widgets/export_dialog.dart';
@@ -140,9 +141,18 @@ class _MaterialScreenState extends State<MaterialScreen> {
       ),
     );
     if (confirm == true) {
-      await controller.deleteMaterial(material);
-      await refreshList();
-      _showSnack('Đã xóa vật tư', Colors.red);
+      try {
+        await controller.deleteMaterial(material);
+        if (!mounted) return;
+        setState(() {
+          _allMaterials.removeWhere((item) => item.id == material.id);
+          materials = _filterMaterials(_allMaterials, _searchQuery);
+        });
+        _showSnack('Đã xóa vật tư', Colors.red);
+      } catch (e) {
+        if (!mounted) return;
+        _showSnack('Lỗi xóa vật tư: $e', Colors.red);
+      }
     }
   }
 
@@ -376,17 +386,25 @@ class _MaterialScreenState extends State<MaterialScreen> {
     );
 
     if (widget.showSidebar) {
-      return Scaffold(
-        backgroundColor: AppColors.background,
-        body: Row(
-          children: [
-            DashboardSidebar(
-              selectedIndex: selectedMenu,
-              onSelect: (v) => setState(() => selectedMenu = v),
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          final hasSpace = constraints.maxWidth >= AppSizes.sidebarWidth + 400;
+          if (!hasSpace) {
+            return Scaffold(backgroundColor: AppColors.background, body: content);
+          }
+          return Scaffold(
+            backgroundColor: AppColors.background,
+            body: Row(
+              children: [
+                DashboardSidebar(
+                  selectedIndex: selectedMenu,
+                  onSelect: (v) => setState(() => selectedMenu = v),
+                ),
+                Expanded(child: content),
+              ],
             ),
-            Expanded(child: content),
-          ],
-        ),
+          );
+        },
       );
     }
 

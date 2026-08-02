@@ -6,6 +6,7 @@ import '../data/app_data.dart';
 import '../models/supplier_model.dart';
 import '../services/firestore_data_service.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_sizes.dart';
 import '../widgets/dashboard_header.dart';
 import '../widgets/dashboard_sidebar.dart';
 import '../widgets/supplier_dialog.dart';
@@ -394,17 +395,25 @@ class _SupplierScreenState extends State<SupplierScreen> {
     );
 
     if (widget.showSidebar) {
-      return Scaffold(
-        backgroundColor: AppColors.background,
-        body: Row(
-          children: [
-            DashboardSidebar(
-              selectedIndex: selectedMenu,
-              onSelect: (value) => setState(() => selectedMenu = value),
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          final hasSpace = constraints.maxWidth >= AppSizes.sidebarWidth + 400;
+          if (!hasSpace) {
+            return Scaffold(backgroundColor: AppColors.background, body: content);
+          }
+          return Scaffold(
+            backgroundColor: AppColors.background,
+            body: Row(
+              children: [
+                DashboardSidebar(
+                  selectedIndex: selectedMenu,
+                  onSelect: (value) => setState(() => selectedMenu = value),
+                ),
+                Expanded(child: content),
+              ],
             ),
-            Expanded(child: content),
-          ],
-        ),
+          );
+        },
       );
     }
 

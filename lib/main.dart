@@ -120,7 +120,7 @@ class _LoginPageState extends State<LoginPage> {
     try {
       Navigator.of(
         context,
-      ).pushReplacement(MaterialPageRoute(builder: (_) => const AppShell()));
+      ).pushReplacement(MaterialPageRoute(builder: (_) => AppShell()));
     } catch (e) {
       // ignore
     }
@@ -219,7 +219,7 @@ class _LoginPageState extends State<LoginPage> {
       if (!mounted) return;
       Navigator.of(
         context,
-      ).pushReplacement(MaterialPageRoute(builder: (_) => const AppShell()));
+      ).pushReplacement(MaterialPageRoute(builder: (_) => AppShell()));
       return;
     }
 
@@ -243,7 +243,7 @@ class _LoginPageState extends State<LoginPage> {
       if (!mounted) return;
       Navigator.of(
         context,
-      ).pushReplacement(MaterialPageRoute(builder: (_) => const AppShell()));
+      ).pushReplacement(MaterialPageRoute(builder: (_) => AppShell()));
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(

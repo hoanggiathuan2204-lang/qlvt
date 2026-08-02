@@ -71,7 +71,6 @@ class _AppShellState extends State<AppShell> {
         final isDesktop = constraints.maxWidth >= _desktopBreakpoint;
 
         if (isDesktop) {
-          // ─── Desktop layout: sidebar + content ───
           return Scaffold(
             backgroundColor: AppColors.background,
             body: Row(
@@ -83,26 +82,25 @@ class _AppShellState extends State<AppShell> {
               ],
             ),
           );
-        } else {
-          // ─── Mobile layout: drawer + content (NO AppBar) ───
-          return Scaffold(
-            key: _scaffoldKey,
-            backgroundColor: AppColors.background,
-            drawer: Drawer(
-              child: DashboardSidebar(
-                selectedIndex: _selected,
-                onSelect: (index) {
-                  _onSelect(index);
-                  Navigator.of(context).pop(); // close drawer
-                },
-                onCloseDrawer: () {
-                  Navigator.of(context).pop(); // close drawer
-                },
-              ),
-            ),
-            body: IndexedStack(index: _selected, children: screens),
-          );
         }
+
+        return Scaffold(
+          key: _scaffoldKey,
+          backgroundColor: AppColors.background,
+          drawer: Drawer(
+            child: DashboardSidebar(
+              selectedIndex: _selected,
+              onSelect: (index) {
+                _onSelect(index);
+                Navigator.of(context).pop();
+              },
+              onCloseDrawer: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ),
+          body: IndexedStack(index: _selected, children: screens),
+        );
       },
     );
   }

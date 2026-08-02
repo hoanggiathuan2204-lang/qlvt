@@ -7,7 +7,9 @@ import '../models/product_model.dart';
 import '../models/delivery_model.dart';
 import '../services/firestore_data_service.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_sizes.dart';
 import '../widgets/dashboard_header.dart';
+import '../widgets/dashboard_sidebar.dart';
 
 import '../widgets/product_card.dart';
 import '../widgets/product_dialog.dart';
@@ -32,6 +34,7 @@ class _ProductScreenState extends State<ProductScreen> {
   List<ProductModel> _allProducts = [];
   List<ProductModel> products = [];
   String _searchQuery = '';
+  int selectedMenu = 3;
 
   @override
   void initState() {
@@ -445,25 +448,40 @@ class _ProductScreenState extends State<ProductScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final Widget content = Column(
+      children: [
+        DashboardHeader(
+          title: 'Quản lý thành phẩm',
+          userName: 'Administrator',
+          onMenuTap: widget.onMenuTap,
+        ),
+        Expanded(child: buildContent()),
+      ],
+    );
+
     if (widget.showSidebar) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Quản lý thành phẩm')),
-        body: buildContent(),
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          final hasSpace = constraints.maxWidth >= AppSizes.sidebarWidth + 400;
+          if (!hasSpace) {
+            return Scaffold(backgroundColor: AppColors.background, body: content);
+          }
+          return Scaffold(
+            backgroundColor: AppColors.background,
+            body: Row(
+              children: [
+                DashboardSidebar(
+                  selectedIndex: selectedMenu,
+                  onSelect: (v) => setState(() => selectedMenu = v),
+                ),
+                Expanded(child: content),
+              ],
+            ),
+          );
+        },
       );
     }
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: Column(
-        children: [
-          DashboardHeader(
-            title: 'Quản lý thành phẩm',
-            userName: 'Administrator',
-            onMenuTap: widget.onMenuTap,
-          ),
-          Expanded(child: buildContent()),
-        ],
-      ),
-    );
+    return Scaffold(backgroundColor: AppColors.background, body: content);
   }
 }

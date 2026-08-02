@@ -5,6 +5,7 @@ import '../models/export_model.dart';
 import '../models/import_model.dart';
 import '../models/material_model.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_sizes.dart';
 import '../widgets/dashboard_header.dart';
 import '../widgets/dashboard_sidebar.dart';
 
@@ -91,15 +92,27 @@ class _ReportScreenState extends State<ReportScreen>
 
       if (!mounted) return;
       setState(() {
-        totalMaterial = results[0] as int;
-        totalInventory = results[1] as int;
-        warningCount = results[2] as int;
-        totalProduct = results[3] as int;
-        totalDelivery = results[4] as int;
-        totalSupplier = results[5] as int;
-        imports = results[6] as List<ImportModel>;
-        exports = results[7] as List<ExportModel>;
-        warningMaterials = results[8] as List<MaterialModel>;
+        if (results.length >= 9) {
+          totalMaterial = results[0] as int;
+          totalInventory = results[1] as int;
+          warningCount = results[2] as int;
+          totalProduct = results[3] as int;
+          totalDelivery = results[4] as int;
+          totalSupplier = results[5] as int;
+          imports = results[6] as List<ImportModel>;
+          exports = results[7] as List<ExportModel>;
+          warningMaterials = results[8] as List<MaterialModel>;
+        } else {
+          totalMaterial = 0;
+          totalInventory = 0;
+          warningCount = 0;
+          totalProduct = 0;
+          totalDelivery = 0;
+          totalSupplier = 0;
+          imports = [];
+          exports = [];
+          warningMaterials = [];
+        }
         loading = false;
       });
     } catch (e) {
@@ -167,17 +180,25 @@ class _ReportScreenState extends State<ReportScreen>
     );
 
     if (widget.showSidebar) {
-      return Scaffold(
-        backgroundColor: AppColors.background,
-        body: Row(
-          children: [
-            DashboardSidebar(
-              selectedIndex: selectedMenu,
-              onSelect: (v) => setState(() => selectedMenu = v),
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          final hasSpace = constraints.maxWidth >= AppSizes.sidebarWidth + 400;
+          if (!hasSpace) {
+            return Scaffold(backgroundColor: AppColors.background, body: content);
+          }
+          return Scaffold(
+            backgroundColor: AppColors.background,
+            body: Row(
+              children: [
+                DashboardSidebar(
+                  selectedIndex: selectedMenu,
+                  onSelect: (v) => setState(() => selectedMenu = v),
+                ),
+                Expanded(child: content),
+              ],
             ),
-            Expanded(child: content),
-          ],
-        ),
+          );
+        },
       );
     }
 

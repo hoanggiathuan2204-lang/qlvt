@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 
 import '../models/delivery_model.dart';
 import '../models/material_model.dart';
@@ -60,17 +61,32 @@ class FirestoreDataService {
     required String targetName,
   }) async {
     try {
-      final user = AuthService.instance.currentUser;
-      if (user == null) return;
+      var user = AuthService.instance.currentUser;
+      String username;
+      String displayName;
+      String role;
+
+      if (user != null) {
+        username = user.username;
+        displayName = user.displayName;
+        role = user.role;
+      } else {
+        // Fallback to FirebaseAuth (useful on web where app-level AuthService
+        // might not be populated yet)
+        final fbUser = fb_auth.FirebaseAuth.instance.currentUser;
+        username = fbUser?.email ?? 'anonymous';
+        displayName = fbUser?.displayName ?? username;
+        role = 'user';
+      }
 
       final id = DateTime.now().millisecondsSinceEpoch.toString();
       final notification = NotificationModel(
         id: id,
         action: action,
         description: description,
-        userName: user.username,
-        displayName: user.displayName,
-        userRole: user.role,
+        userName: username,
+        displayName: displayName,
+        userRole: role,
         timestamp: DateTime.now(),
         targetType: targetType,
         targetId: targetId,
